@@ -21,7 +21,7 @@
 
 # --- MakeMaker const_config section:
 
-# These definitions are from config.sh (via /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all/Config.pm)
+# These definitions are from config.sh (via /usr/local/lib/perl5/5.6.1/sun4-solaris/Config.pm)
 
 # They may have been overridden via Makefile.PL or on the command line
 AR = ar
@@ -31,8 +31,8 @@ CCDLFLAGS =
 DLEXT = so
 DLSRC = dl_dlopen.xs
 LD = gcc
-LDDLFLAGS = -G -L/opt/sfw/lib
-LDFLAGS = -L/opt/sfw/lib
+LDDLFLAGS = -G -L/usr/local/BerkeleyDB.3.1/lib -L/opt/sfw/lib -L/usr/local/lib -L/usr/lib -L/usr/ccs/lib
+LDFLAGS = -L/usr/local/BerkeleyDB.3.1/lib -L/opt/sfw/lib -L/usr/local/lib -L/usr/lib -L/usr/ccs/lib 
 LIBC = /lib/libc.so
 LIB_EXT = .a
 OBJ_EXT = .o
@@ -49,31 +49,31 @@ AR_STATIC_ARGS = cr
 NAME = Weaving::Tablet::Tk
 DISTNAME = Weaving-Tablet-Tk
 NAME_SYM = Weaving_Tablet_Tk
-VERSION = 0.6
-VERSION_SYM = 0_6
-XS_VERSION = 0.6
+VERSION = 0.8.1
+VERSION_SYM = 0_8_1
+XS_VERSION = 0.8.1
 INST_BIN = ../blib/bin
 INST_EXE = ../blib/script
 INST_LIB = ../blib/lib
 INST_ARCHLIB = ../blib/arch
 INST_SCRIPT = ../blib/script
-PREFIX = /opt/sfw
+PREFIX = /usr/local
 INSTALLDIRS = site
 INSTALLPRIVLIB = $(PREFIX)/lib/perl5/5.6.1
-INSTALLARCHLIB = $(PREFIX)/lib/perl5/5.6.1/sun4-solaris-64all
+INSTALLARCHLIB = $(PREFIX)/lib/perl5/5.6.1/sun4-solaris
 INSTALLSITELIB = $(PREFIX)/lib/perl5/site_perl/5.6.1
 INSTALLSITEARCH = $(PREFIX)/lib/perl5/site_perl/5.6.1/sun4-solaris
 INSTALLBIN = $(PREFIX)/bin
 INSTALLSCRIPT = $(PREFIX)/bin
-PERL_LIB = /opt/sfw/lib/perl5/5.6.1
-PERL_ARCHLIB = /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all
-SITELIBEXP = /opt/sfw/lib/perl5/site_perl/5.6.1
-SITEARCHEXP = /opt/sfw/lib/perl5/site_perl/5.6.1/sun4-solaris
+PERL_LIB = /usr/local/lib/perl5/5.6.1
+PERL_ARCHLIB = /usr/local/lib/perl5/5.6.1/sun4-solaris
+SITELIBEXP = /usr/local/lib/perl5/site_perl/5.6.1
+SITEARCHEXP = /usr/local/lib/perl5/site_perl/5.6.1/sun4-solaris
 LIBPERL_A = libperl.a
 FIRST_MAKEFILE = Makefile
 MAKE_APERL_FILE = Makefile.aperl
 PERLMAINCC = $(CC)
-PERL_INC = /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all/CORE
+PERL_INC = /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE
 PERL = /usr/bin/perl
 FULLPERL = /usr/bin/perl
 FULL_AR = /usr/ccs/bin/ar
@@ -84,7 +84,7 @@ XS_VERSION_MACRO = XS_VERSION
 XS_DEFINE_VERSION = -D$(XS_VERSION_MACRO)=\"$(XS_VERSION)\"
 PERL_MALLOC_DEF = -DPERL_EXTMALLOC_DEF -Dmalloc=Perl_malloc -Dfree=Perl_mfree -Drealloc=Perl_realloc -Dcalloc=Perl_calloc
 
-MAKEMAKER = /opt/sfw/lib/perl5/5.6.1/ExtUtils/MakeMaker.pm
+MAKEMAKER = /usr/local/lib/perl5/5.6.1/ExtUtils/MakeMaker.pm
 MM_VERSION = 5.45
 
 # FULLEXT = Pathname for extension directory (eg Foo/Bar/Oracle).
@@ -258,21 +258,21 @@ config :: $(INST_ARCHAUTODIR)/.exists
 config :: $(INST_AUTODIR)/.exists
 	@$(NOOP)
 
-$(INST_AUTODIR)/.exists :: /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all/CORE/perl.h
+$(INST_AUTODIR)/.exists :: /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h
 	@$(MKPATH) $(INST_AUTODIR)
-	@$(EQUALIZE_TIMESTAMP) /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all/CORE/perl.h $(INST_AUTODIR)/.exists
+	@$(EQUALIZE_TIMESTAMP) /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h $(INST_AUTODIR)/.exists
 
 	-@$(CHMOD) $(PERM_RWX) $(INST_AUTODIR)
 
-$(INST_LIBDIR)/.exists :: /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all/CORE/perl.h
+$(INST_LIBDIR)/.exists :: /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h
 	@$(MKPATH) $(INST_LIBDIR)
-	@$(EQUALIZE_TIMESTAMP) /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all/CORE/perl.h $(INST_LIBDIR)/.exists
+	@$(EQUALIZE_TIMESTAMP) /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h $(INST_LIBDIR)/.exists
 
 	-@$(CHMOD) $(PERM_RWX) $(INST_LIBDIR)
 
-$(INST_ARCHAUTODIR)/.exists :: /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all/CORE/perl.h
+$(INST_ARCHAUTODIR)/.exists :: /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h
 	@$(MKPATH) $(INST_ARCHAUTODIR)
-	@$(EQUALIZE_TIMESTAMP) /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all/CORE/perl.h $(INST_ARCHAUTODIR)/.exists
+	@$(EQUALIZE_TIMESTAMP) /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h $(INST_ARCHAUTODIR)/.exists
 
 	-@$(CHMOD) $(PERM_RWX) $(INST_ARCHAUTODIR)
 
@@ -280,9 +280,9 @@ config :: $(INST_MAN3DIR)/.exists
 	@$(NOOP)
 
 
-$(INST_MAN3DIR)/.exists :: /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all/CORE/perl.h
+$(INST_MAN3DIR)/.exists :: /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h
 	@$(MKPATH) $(INST_MAN3DIR)
-	@$(EQUALIZE_TIMESTAMP) /opt/sfw/lib/perl5/5.6.1/sun4-solaris-64all/CORE/perl.h $(INST_MAN3DIR)/.exists
+	@$(EQUALIZE_TIMESTAMP) /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h $(INST_MAN3DIR)/.exists
 
 	-@$(CHMOD) $(PERM_RWX) $(INST_MAN3DIR)
 
@@ -340,7 +340,7 @@ htmlifypods : pure_all
 
 
 # --- MakeMaker manifypods section:
-POD2MAN_EXE = /opt/sfw/bin/pod2man
+POD2MAN_EXE = /usr/local/bin/pod2man
 POD2MAN = $(PERL) -we '%m=@ARGV;for (keys %m){' \
 -e 'next if -e $$m{$$_} && -M $$m{$$_} < -M $$_ && -M $$m{$$_} < -M "Makefile";' \
 -e 'print "Manifying $$m{$$_}\n";' \
@@ -460,7 +460,7 @@ testdb_static :: testdb_dynamic
 # --- MakeMaker ppd section:
 # Creates a PPD (Perl Package Description) for a binary distribution.
 ppd:
-	@$(PERL) -e "print qq{<SOFTPKG NAME=\"Weaving-Tablet-Tk\" VERSION=\"0,6,0,0\">\n}. qq{\t<TITLE>Weaving-Tablet-Tk</TITLE>\n}. qq{\t<ABSTRACT></ABSTRACT>\n}. qq{\t<AUTHOR>Michael Houghton &lt;herveus\@cpan.org&gt;</AUTHOR>\n}. qq{\t<IMPLEMENTATION>\n}. qq{\t\t<DEPENDENCY NAME=\"Tk\" VERSION=\"800,012,0,0\" />\n}. qq{\t\t<OS NAME=\"$(OSNAME)\" />\n}. qq{\t\t<ARCHITECTURE NAME=\"sun4-solaris-64all\" />\n}. qq{\t\t<CODEBASE HREF=\"\" />\n}. qq{\t</IMPLEMENTATION>\n}. qq{</SOFTPKG>\n}" > Weaving-Tablet-Tk.ppd
+	@$(PERL) -e "print qq{<SOFTPKG NAME=\"Weaving-Tablet-Tk\" VERSION=\"0,8,1,0\">\n}. qq{\t<TITLE>Weaving-Tablet-Tk</TITLE>\n}. qq{\t<ABSTRACT>Tk user interface to Weaving::Tablet designer</ABSTRACT>\n}. qq{\t<AUTHOR>Michael Houghton &lt;herveus\@cpan.org&gt;</AUTHOR>\n}. qq{\t<IMPLEMENTATION>\n}. qq{\t\t<DEPENDENCY NAME=\"Tk\" VERSION=\"800,012,0,0\" />\n}. qq{\t\t<OS NAME=\"$(OSNAME)\" />\n}. qq{\t\t<ARCHITECTURE NAME=\"sun4-solaris\" />\n}. qq{\t\t<CODEBASE HREF=\"\" />\n}. qq{\t</IMPLEMENTATION>\n}. qq{</SOFTPKG>\n}" > Weaving-Tablet-Tk.ppd
 
 # --- MakeMaker pm_to_blib section:
 

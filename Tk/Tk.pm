@@ -1,6 +1,6 @@
-package Snartemo::Tk;
+package Weaving::Tablet::Tk;
 
-use Snartemo;
+use Weaving::Tablet;
 require Tk::HList;
 require Tk::FileSelect;
 require Tk::FontDialog;
@@ -10,14 +10,14 @@ use Data::Dumper;
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD);
 
-@ISA = qw(Snartemo);
+@ISA = qw(Weaving::Tablet);
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 @EXPORT = qw(
 	
 );
-$VERSION = '0.6';
+$VERSION = '0.8.1';
 
 
 # Preloaded methods go here.
@@ -1851,14 +1851,14 @@ __END__
 
 =head1 NAME
 
-Snartemo::Tk - Tk user interface to Snartemo designer
+Weaving::Tablet::Tk - Tk user interface to Weaving::Tablet designer
 
 =head1 SYNOPSIS
 
-  use Snartemo::Tk;
+  use Weaving::Tablet::Tk;
   use Tk;
-  my $pattern = Snartemo::Tk->new_pattern(mw => $mw, file => $file);
-  my $pattern2 = Snartemo::Tk->new_pattern(mw => $mw, cards => $cards, rows => $rows);
+  my $pattern = Weaving::Tablet::Tk->new_pattern(mw => $mw, file => $file);
+  my $pattern2 = Weaving::Tablet::Tk->new_pattern(mw => $mw, cards => $cards, rows => $rows);
   
   $pattern->canvas # get the drawing area
   $pattern->window # get the toplevel window
@@ -1867,9 +1867,9 @@ Snartemo::Tk - Tk user interface to Snartemo designer
 
 =head1 DESCRIPTION
 
-Snartemo::Tk wraps a Tk user interface around the core routines in Snartemo.
+Weaving::Tablet::Tk wraps a Tk user interface around the core routines in Weaving::Tablet.
 
-Snartemo::Tk is a subclass of Snartemo.
+Weaving::Tablet::Tk is a subclass of Weaving::Tablet.
 
 =head2 new
 

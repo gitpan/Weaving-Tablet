@@ -6,3 +6,7 @@ Revision history for Perl extension Weaving::Tablet.
 
     - copied code from Snartemo 0.6 (old name) and updated ancillary files
 	- first release under this name
+
+0.8.1 Thu May 16
+   - fixed references to old module name (dope slap me silly!)
+

@@ -1,11 +1,11 @@
 NAME
-    Snartemo::Tk - Tk user interface to Snartemo designer
+    Weaving::Tablet::Tk - Tk user interface to Weaving::Tablet designer
 
 SYNOPSIS
-      use Snartemo::Tk;
+      use Weaving::Tablet::Tk;
       use Tk;
-      my $pattern = Snartemo::Tk->new_pattern(mw => $mw, file => $file);
-      my $pattern2 = Snartemo::Tk->new_pattern(mw => $mw, cards => $cards, rows => $rows);
+      my $pattern = Weaving::Tablet::Tk->new_pattern(mw => $mw, file => $file);
+      my $pattern2 = Weaving::Tablet::Tk->new_pattern(mw => $mw, cards => $cards, rows => $rows);
   
       $pattern->canvas # get the drawing area
       $pattern->window # get the toplevel window
@@ -13,10 +13,10 @@ SYNOPSIS
       MainLoop;
 
 DESCRIPTION
-    Snartemo::Tk wraps a Tk user interface around the core routines in
-    Snartemo.
+    Weaving::Tablet::Tk wraps a Tk user interface around the core routines in
+    Weaving::Tablet.
 
-    Snartemo::Tk is a subclass of Snartemo.
+    Weaving::Tablet::Tk is a subclass of Weaving::Tablet.
 
   new
 

@@ -16,7 +16,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 @EXPORT = qw(
 	
 );
-$VERSION = '0.8';
+$VERSION = '0.8.1';
 
 # POD is after __END__
 
@@ -835,7 +835,7 @@ Weaving::Tablet - Perl extension for manipulating tablet weaving patterns
 
 =head1 DESCRIPTION
 
-The Snartemo module provides data structures and routines to manipulate
+The Weaving::Tablet module provides data structures and routines to manipulate
 tablet weaving patterns. It is limited to patterns using up to eight-holed 
 tablets with all holes threaded and that do not involve flipping tablets, 
 and use single turns only (no turning past more than one hole).

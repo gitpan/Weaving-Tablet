@@ -15,3 +15,6 @@ Revision history for Perl extension Snartemo::Tk.
 	- almost every dialog now is cached in the object with each object
 	having its own instance
 	- added ability to have cards idle
+
+0.8.1 16 May 2002
+   - fixed remaining references to old name
