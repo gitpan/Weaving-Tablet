@@ -17,7 +17,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD);
 @EXPORT = qw(
 	
 );
-$VERSION = '0.8.1';
+$VERSION = '0.8.2';
 
 
 # Preloaded methods go here.

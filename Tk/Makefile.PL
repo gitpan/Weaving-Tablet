@@ -4,7 +4,12 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'		=> 'Weaving::Tablet::Tk',
     'VERSION_FROM'	=> 'Tk.pm', # finds $VERSION
-    'PREREQ_PM'		=> {Tk => 800.012}, # e.g., Module::Name => 1.1
+    'PREREQ_PM'		=> {Tk => 800.012,
+	 Tk::HList => 0,
+	 Tk::FileSelect => 0,
+	 Tk::FontDialog => 0,
+	 Tk::ColorEditor => 0,
+	}, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM => 'Tk.pm', # retrieve abstract from module
        AUTHOR     => 'Michael Houghton <herveus@cpan.org>') : ()),

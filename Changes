@@ -10,3 +10,5 @@ Revision history for Perl extension Weaving::Tablet.
 0.8.1 Thu May 16
    - fixed references to old module name (dope slap me silly!)
 
+0.8.2 Fri May 17
+   - added Tk modules to PREREQ_PM

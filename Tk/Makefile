@@ -13,7 +13,7 @@
 #	ABSTRACT_FROM => q[Tk.pm]
 #	AUTHOR => q[Michael Houghton <herveus@cpan.org>]
 #	NAME => q[Weaving::Tablet::Tk]
-#	PREREQ_PM => { Tk=>q[800.012] }
+#	PREREQ_PM => { Tk=>q[800.012], Tk::FileSelect=>q[0], Tk::HList=>q[0], Tk::FontDialog=>q[0], Tk::ColorEditor=>q[0] }
 #	VERSION_FROM => q[Tk.pm]
 
 # --- MakeMaker post_initialize section:
@@ -49,9 +49,9 @@ AR_STATIC_ARGS = cr
 NAME = Weaving::Tablet::Tk
 DISTNAME = Weaving-Tablet-Tk
 NAME_SYM = Weaving_Tablet_Tk
-VERSION = 0.8.1
-VERSION_SYM = 0_8_1
-XS_VERSION = 0.8.1
+VERSION = 0.8.2
+VERSION_SYM = 0_8_2
+XS_VERSION = 0.8.2
 INST_BIN = ../blib/bin
 INST_EXE = ../blib/script
 INST_LIB = ../blib/lib
@@ -460,7 +460,7 @@ testdb_static :: testdb_dynamic
 # --- MakeMaker ppd section:
 # Creates a PPD (Perl Package Description) for a binary distribution.
 ppd:
-	@$(PERL) -e "print qq{<SOFTPKG NAME=\"Weaving-Tablet-Tk\" VERSION=\"0,8,1,0\">\n}. qq{\t<TITLE>Weaving-Tablet-Tk</TITLE>\n}. qq{\t<ABSTRACT>Tk user interface to Weaving::Tablet designer</ABSTRACT>\n}. qq{\t<AUTHOR>Michael Houghton &lt;herveus\@cpan.org&gt;</AUTHOR>\n}. qq{\t<IMPLEMENTATION>\n}. qq{\t\t<DEPENDENCY NAME=\"Tk\" VERSION=\"800,012,0,0\" />\n}. qq{\t\t<OS NAME=\"$(OSNAME)\" />\n}. qq{\t\t<ARCHITECTURE NAME=\"sun4-solaris\" />\n}. qq{\t\t<CODEBASE HREF=\"\" />\n}. qq{\t</IMPLEMENTATION>\n}. qq{</SOFTPKG>\n}" > Weaving-Tablet-Tk.ppd
+	@$(PERL) -e "print qq{<SOFTPKG NAME=\"Weaving-Tablet-Tk\" VERSION=\"0,8,2,0\">\n}. qq{\t<TITLE>Weaving-Tablet-Tk</TITLE>\n}. qq{\t<ABSTRACT>Tk user interface to Weaving::Tablet designer</ABSTRACT>\n}. qq{\t<AUTHOR>Michael Houghton &lt;herveus\@cpan.org&gt;</AUTHOR>\n}. qq{\t<IMPLEMENTATION>\n}. qq{\t\t<DEPENDENCY NAME=\"Tk\" VERSION=\"800,012,0,0\" />\n}. qq{\t\t<DEPENDENCY NAME=\"Tk-ColorEditor\" VERSION=\"0,0,0,0\" />\n}. qq{\t\t<DEPENDENCY NAME=\"Tk-FileSelect\" VERSION=\"0,0,0,0\" />\n}. qq{\t\t<DEPENDENCY NAME=\"Tk-FontDialog\" VERSION=\"0,0,0,0\" />\n}. qq{\t\t<DEPENDENCY NAME=\"Tk-HList\" VERSION=\"0,0,0,0\" />\n}. qq{\t\t<OS NAME=\"$(OSNAME)\" />\n}. qq{\t\t<ARCHITECTURE NAME=\"sun4-solaris\" />\n}. qq{\t\t<CODEBASE HREF=\"\" />\n}. qq{\t</IMPLEMENTATION>\n}. qq{</SOFTPKG>\n}" > Weaving-Tablet-Tk.ppd
 
 # --- MakeMaker pm_to_blib section:
 
