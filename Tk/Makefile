@@ -1,97 +1,145 @@
 # This Makefile is for the Weaving::Tablet::Tk extension to perl.
 #
 # It was generated automatically by MakeMaker version
-# 5.45 (Revision: 1.222) from the contents of
+# 6.50 (Revision: 65000) from the contents of
 # Makefile.PL. Don't edit this file, edit Makefile.PL instead.
 #
-#	ANY CHANGES MADE HERE WILL BE LOST!
+#       ANY CHANGES MADE HERE WILL BE LOST!
 #
 #   MakeMaker ARGV: ()
 #
 #   MakeMaker Parameters:
 
-#	ABSTRACT_FROM => q[Tk.pm]
-#	AUTHOR => q[Michael Houghton <herveus@cpan.org>]
-#	NAME => q[Weaving::Tablet::Tk]
-#	PREREQ_PM => { Tk=>q[800.012], Tk::FileSelect=>q[0], Tk::HList=>q[0], Tk::FontDialog=>q[0], Tk::ColorEditor=>q[0] }
-#	VERSION_FROM => q[Tk.pm]
+#     ABSTRACT_FROM => q[Tk.pm]
+#     AUTHOR => q[Michael Houghton <herveus@cpan.org>]
+#     NAME => q[Weaving::Tablet::Tk]
+#     PREREQ_PM => { Tk::HList=>q[0], Tk::FileSelect=>q[0], Tk::FontDialog=>q[0], Tk::ColorEditor=>q[0], Tk=>q[800.012] }
+#     VERSION_FROM => q[Tk.pm]
 
 # --- MakeMaker post_initialize section:
 
 
 # --- MakeMaker const_config section:
 
-# These definitions are from config.sh (via /usr/local/lib/perl5/5.6.1/sun4-solaris/Config.pm)
-
-# They may have been overridden via Makefile.PL or on the command line
+# These definitions are from config.sh (via /usr/local/lib/perl5/5.10.0/darwin-2level/Config.pm).
+# They may have been overridden via Makefile.PL or on the command line.
 AR = ar
-CC = gcc
-CCCDLFLAGS = -fPIC
+CC = cc
+CCCDLFLAGS =  
 CCDLFLAGS =  
-DLEXT = so
+DLEXT = bundle
 DLSRC = dl_dlopen.xs
-LD = gcc
-LDDLFLAGS = -G -L/usr/local/BerkeleyDB.3.1/lib -L/opt/sfw/lib -L/usr/local/lib -L/usr/lib -L/usr/ccs/lib
-LDFLAGS = -L/usr/local/BerkeleyDB.3.1/lib -L/opt/sfw/lib -L/usr/local/lib -L/usr/lib -L/usr/ccs/lib 
-LIBC = /lib/libc.so
+EXE_EXT = 
+FULL_AR = /usr/bin/ar
+LD = env MACOSX_DEPLOYMENT_TARGET=10.3 cc
+LDDLFLAGS =  -bundle -undefined dynamic_lookup -L/usr/local/lib
+LDFLAGS =  -L/usr/local/lib
+LIBC = /usr/lib/libc.dylib
 LIB_EXT = .a
 OBJ_EXT = .o
-OSNAME = solaris
-OSVERS = 2.8
-RANLIB = :
-SO = so
-EXE_EXT = 
-FULL_AR = /usr/ccs/bin/ar
+OSNAME = darwin
+OSVERS = 8.11.0
+RANLIB = ranlib
+SITELIBEXP = /usr/local/lib/perl5/site_perl/5.10.0
+SITEARCHEXP = /usr/local/lib/perl5/site_perl/5.10.0/darwin-2level
+SO = dylib
+VENDORARCHEXP = 
+VENDORLIBEXP = 
 
 
 # --- MakeMaker constants section:
 AR_STATIC_ARGS = cr
+DIRFILESEP = /
+DFSEP = $(DIRFILESEP)
 NAME = Weaving::Tablet::Tk
-DISTNAME = Weaving-Tablet-Tk
 NAME_SYM = Weaving_Tablet_Tk
 VERSION = 0.8.2
-VERSION_SYM = 0_8_2
-XS_VERSION = 0.8.2
-INST_BIN = ../blib/bin
-INST_EXE = ../blib/script
-INST_LIB = ../blib/lib
-INST_ARCHLIB = ../blib/arch
-INST_SCRIPT = ../blib/script
-PREFIX = /usr/local
-INSTALLDIRS = site
-INSTALLPRIVLIB = $(PREFIX)/lib/perl5/5.6.1
-INSTALLARCHLIB = $(PREFIX)/lib/perl5/5.6.1/sun4-solaris
-INSTALLSITELIB = $(PREFIX)/lib/perl5/site_perl/5.6.1
-INSTALLSITEARCH = $(PREFIX)/lib/perl5/site_perl/5.6.1/sun4-solaris
-INSTALLBIN = $(PREFIX)/bin
-INSTALLSCRIPT = $(PREFIX)/bin
-PERL_LIB = /usr/local/lib/perl5/5.6.1
-PERL_ARCHLIB = /usr/local/lib/perl5/5.6.1/sun4-solaris
-SITELIBEXP = /usr/local/lib/perl5/site_perl/5.6.1
-SITEARCHEXP = /usr/local/lib/perl5/site_perl/5.6.1/sun4-solaris
-LIBPERL_A = libperl.a
-FIRST_MAKEFILE = Makefile
-MAKE_APERL_FILE = Makefile.aperl
-PERLMAINCC = $(CC)
-PERL_INC = /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE
-PERL = /usr/bin/perl
-FULLPERL = /usr/bin/perl
-FULL_AR = /usr/ccs/bin/ar
-
 VERSION_MACRO = VERSION
+VERSION_SYM = 0_8_2
 DEFINE_VERSION = -D$(VERSION_MACRO)=\"$(VERSION)\"
+XS_VERSION = 0.8.2
 XS_VERSION_MACRO = XS_VERSION
 XS_DEFINE_VERSION = -D$(XS_VERSION_MACRO)=\"$(XS_VERSION)\"
-PERL_MALLOC_DEF = -DPERL_EXTMALLOC_DEF -Dmalloc=Perl_malloc -Dfree=Perl_mfree -Drealloc=Perl_realloc -Dcalloc=Perl_calloc
+INST_ARCHLIB = ../blib/arch
+INST_SCRIPT = ../blib/script
+INST_BIN = ../blib/bin
+INST_LIB = ../blib/lib
+INST_MAN1DIR = ../blib/man1
+INST_MAN3DIR = ../blib/man3
+MAN1EXT = 1
+MAN3EXT = 3
+INSTALLDIRS = site
+DESTDIR = 
+PREFIX = $(SITEPREFIX)
+PERLPREFIX = /usr/local
+SITEPREFIX = /usr/local
+VENDORPREFIX = 
+INSTALLPRIVLIB = /usr/local/lib/perl5/5.10.0
+DESTINSTALLPRIVLIB = $(DESTDIR)$(INSTALLPRIVLIB)
+INSTALLSITELIB = /usr/local/lib/perl5/site_perl/5.10.0
+DESTINSTALLSITELIB = $(DESTDIR)$(INSTALLSITELIB)
+INSTALLVENDORLIB = 
+DESTINSTALLVENDORLIB = $(DESTDIR)$(INSTALLVENDORLIB)
+INSTALLARCHLIB = /usr/local/lib/perl5/5.10.0/darwin-2level
+DESTINSTALLARCHLIB = $(DESTDIR)$(INSTALLARCHLIB)
+INSTALLSITEARCH = /usr/local/lib/perl5/site_perl/5.10.0/darwin-2level
+DESTINSTALLSITEARCH = $(DESTDIR)$(INSTALLSITEARCH)
+INSTALLVENDORARCH = 
+DESTINSTALLVENDORARCH = $(DESTDIR)$(INSTALLVENDORARCH)
+INSTALLBIN = /usr/local/bin
+DESTINSTALLBIN = $(DESTDIR)$(INSTALLBIN)
+INSTALLSITEBIN = /usr/local/bin
+DESTINSTALLSITEBIN = $(DESTDIR)$(INSTALLSITEBIN)
+INSTALLVENDORBIN = 
+DESTINSTALLVENDORBIN = $(DESTDIR)$(INSTALLVENDORBIN)
+INSTALLSCRIPT = /usr/local/bin
+DESTINSTALLSCRIPT = $(DESTDIR)$(INSTALLSCRIPT)
+INSTALLSITESCRIPT = /usr/local/bin
+DESTINSTALLSITESCRIPT = $(DESTDIR)$(INSTALLSITESCRIPT)
+INSTALLVENDORSCRIPT = 
+DESTINSTALLVENDORSCRIPT = $(DESTDIR)$(INSTALLVENDORSCRIPT)
+INSTALLMAN1DIR = /usr/local/share/man/man1
+DESTINSTALLMAN1DIR = $(DESTDIR)$(INSTALLMAN1DIR)
+INSTALLSITEMAN1DIR = /usr/local/bin/man/man1
+DESTINSTALLSITEMAN1DIR = $(DESTDIR)$(INSTALLSITEMAN1DIR)
+INSTALLVENDORMAN1DIR = 
+DESTINSTALLVENDORMAN1DIR = $(DESTDIR)$(INSTALLVENDORMAN1DIR)
+INSTALLMAN3DIR = /usr/local/share/man/man3
+DESTINSTALLMAN3DIR = $(DESTDIR)$(INSTALLMAN3DIR)
+INSTALLSITEMAN3DIR = /usr/local/bin/man/man3
+DESTINSTALLSITEMAN3DIR = $(DESTDIR)$(INSTALLSITEMAN3DIR)
+INSTALLVENDORMAN3DIR = 
+DESTINSTALLVENDORMAN3DIR = $(DESTDIR)$(INSTALLVENDORMAN3DIR)
+PERL_LIB = /usr/local/lib/perl5/5.10.0
+PERL_ARCHLIB = /usr/local/lib/perl5/5.10.0/darwin-2level
+LIBPERL_A = libperl.a
+FIRST_MAKEFILE = Makefile
+MAKEFILE_OLD = Makefile.old
+MAKE_APERL_FILE = Makefile.aperl
+PERLMAINCC = $(CC)
+PERL_INC = /usr/local/lib/perl5/5.10.0/darwin-2level/CORE
+PERL = /usr/local/bin/perl
+FULLPERL = /usr/local/bin/perl
+ABSPERL = $(PERL)
+PERLRUN = $(PERL)
+FULLPERLRUN = $(FULLPERL)
+ABSPERLRUN = $(ABSPERL)
+PERLRUNINST = $(PERLRUN) "-I$(INST_ARCHLIB)" "-I$(INST_LIB)"
+FULLPERLRUNINST = $(FULLPERLRUN) "-I$(INST_ARCHLIB)" "-I$(INST_LIB)"
+ABSPERLRUNINST = $(ABSPERLRUN) "-I$(INST_ARCHLIB)" "-I$(INST_LIB)"
+PERL_CORE = 0
+PERM_RW = 644
+PERM_RWX = 755
 
-MAKEMAKER = /usr/local/lib/perl5/5.6.1/ExtUtils/MakeMaker.pm
-MM_VERSION = 5.45
+MAKEMAKER   = /usr/local/lib/perl5/5.10.0/ExtUtils/MakeMaker.pm
+MM_VERSION  = 6.50
+MM_REVISION = 65000
 
 # FULLEXT = Pathname for extension directory (eg Foo/Bar/Oracle).
 # BASEEXT = Basename part of FULLEXT. May be just equal FULLEXT. (eg Oracle)
-# ROOTEXT = Directory part of FULLEXT with leading slash (eg /DBD)  !!! Deprecated from MM 5.32  !!!
 # PARENT_NAME = NAME without BASEEXT and no trailing :: (eg Foo::Bar)
 # DLBASE  = Basename part of dynamic library. May be just equal BASEEXT.
+MAKE = make
 FULLEXT = Weaving/Tablet/Tk
 BASEEXT = Tk
 PARENT_NAME = Weaving::Tablet
@@ -100,102 +148,92 @@ VERSION_FROM = Tk.pm
 OBJECT = 
 LDFROM = $(OBJECT)
 LINKTYPE = dynamic
+BOOTDEP = 
 
 # Handy lists of source code files:
-XS_FILES= 
-C_FILES = 
-O_FILES = 
-H_FILES = 
-HTMLLIBPODS    = 
-HTMLSCRIPTPODS = 
+XS_FILES = 
+C_FILES  = 
+O_FILES  = 
+H_FILES  = 
 MAN1PODS = 
 MAN3PODS = Tk.pm \
 	Tk.pod
-HTMLEXT = html
-INST_MAN1DIR = ../blib/man1
-INSTALLMAN1DIR = $(PREFIX)/man/man1
-MAN1EXT = 1
-INST_MAN3DIR = ../blib/man3
-INSTALLMAN3DIR = $(PREFIX)/man/man3
-MAN3EXT = 3
-PERM_RW = 644
-PERM_RWX = 755
-
-# work around a famous dec-osf make(1) feature(?):
-makemakerdflt: all
-
-.SUFFIXES: .xs .c .C .cpp .cxx .cc $(OBJ_EXT)
-
-# Nick wanted to get rid of .PRECIOUS. I don't remember why. I seem to recall, that
-# some make implementations will delete the Makefile when we rebuild it. Because
-# we call false(1) when we rebuild it. So make(1) is not completely wrong when it
-# does so. Our milage may vary.
-# .PRECIOUS: Makefile    # seems to be not necessary anymore
-
-.PHONY: all config static dynamic test linkext manifest
 
 # Where is the Config information that we are using/depend on
-CONFIGDEP = $(PERL_ARCHLIB)/Config.pm $(PERL_INC)/config.h
+CONFIGDEP = $(PERL_ARCHLIB)$(DFSEP)Config.pm $(PERL_INC)$(DFSEP)config.h
 
-# Where to put things:
+# Where to build things
 INST_LIBDIR      = $(INST_LIB)/Weaving/Tablet
 INST_ARCHLIBDIR  = $(INST_ARCHLIB)/Weaving/Tablet
 
 INST_AUTODIR     = $(INST_LIB)/auto/$(FULLEXT)
 INST_ARCHAUTODIR = $(INST_ARCHLIB)/auto/$(FULLEXT)
 
-INST_STATIC  =
-INST_DYNAMIC =
-INST_BOOT    =
+INST_STATIC      = 
+INST_DYNAMIC     = 
+INST_BOOT        = 
 
-EXPORT_LIST = 
-
-PERL_ARCHIVE = 
-
+# Extra linker info
+EXPORT_LIST        = 
+PERL_ARCHIVE       = 
 PERL_ARCHIVE_AFTER = 
+
 
 TO_INST_PM = Tk.pm \
 	Tk.pod
 
 PM_TO_BLIB = Tk.pod \
-	$(INST_LIBDIR)/Tk.pod \
+	$(INST_LIB)/Weaving/Tablet/Tk.pod \
 	Tk.pm \
-	$(INST_LIBDIR)/Tk.pm
+	$(INST_LIB)/Weaving/Tablet/Tk.pm
+
+
+# --- MakeMaker platform_constants section:
+MM_Unix_VERSION = 6.50
+PERL_MALLOC_DEF = -DPERL_EXTMALLOC_DEF -Dmalloc=Perl_malloc -Dfree=Perl_mfree -Drealloc=Perl_realloc -Dcalloc=Perl_calloc
 
 
 # --- MakeMaker tool_autosplit section:
-
 # Usage: $(AUTOSPLITFILE) FileToSplit AutoDirToSplitInto
-AUTOSPLITFILE = $(PERL) "-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" -e 'use AutoSplit;autosplit($$ARGV[0], $$ARGV[1], 0, 1, 1) ;'
+AUTOSPLITFILE = $(ABSPERLRUN)  -e 'use AutoSplit;  autosplit($$ARGV[0], $$ARGV[1], 0, 1, 1)' --
+
 
 
 # --- MakeMaker tool_xsubpp section:
 
 
 # --- MakeMaker tools_other section:
-
 SHELL = /bin/sh
 CHMOD = chmod
 CP = cp
-LD = gcc
 MV = mv
 NOOP = $(SHELL) -c true
+NOECHO = @
 RM_F = rm -f
 RM_RF = rm -rf
 TEST_F = test -f
 TOUCH = touch
 UMASK_NULL = umask 0
 DEV_NULL = > /dev/null 2>&1
+MKPATH = $(ABSPERLRUN) "-MExtUtils::Command" -e mkpath
+EQUALIZE_TIMESTAMP = $(ABSPERLRUN) "-MExtUtils::Command" -e eqtime
+ECHO = echo
+ECHO_N = echo -n
+UNINST = 0
+VERBINST = 0
+MOD_INSTALL = $(ABSPERLRUN) -MExtUtils::Install -e 'install({@ARGV}, '\''$(VERBINST)'\'', 0, '\''$(UNINST)'\'');' --
+DOC_INSTALL = $(ABSPERLRUN) "-MExtUtils::Command::MM" -e perllocal_install
+UNINSTALL = $(ABSPERLRUN) "-MExtUtils::Command::MM" -e uninstall
+WARN_IF_OLD_PACKLIST = $(ABSPERLRUN) "-MExtUtils::Command::MM" -e warn_if_old_packlist
+MACROSTART = 
+MACROEND = 
+USEMAKEFILE = -f
+FIXIN = $(PERLRUN) "-MExtUtils::MY" -e "MY->fixin(shift)"
 
-# The following is a portable way to say mkdir -p
-# To see which directories are created, change the if 0 to if 1
-MKPATH = $(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e mkpath
 
-# This helps us to minimize the effect of the .exists files A yet
-# better solution would be to have a stable file in the perl
-# distribution with a timestamp of zero. But this solution doesn't
-# need any changes to the core distribution and works with older perls
-EQUALIZE_TIMESTAMP = $(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e eqtime
+# --- MakeMaker makemakerdflt section:
+makemakerdflt : all
+	$(NOECHO) $(NOOP)
 
 
 # --- MakeMaker dist section skipped.
@@ -220,11 +258,16 @@ EQUALIZE_TIMESTAMP = $(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command
 
 # --- MakeMaker pasthru section:
 
-PASTHRU = LIB="$(LIB)"\
-	LIBPERL_A="$(LIBPERL_A)"\
+PASTHRU = LIBPERL_A="$(LIBPERL_A)"\
 	LINKTYPE="$(LINKTYPE)"\
-	PREFIX="$(PREFIX)"\
-	OPTIMIZE="$(OPTIMIZE)"
+	PREFIX="$(PREFIX)"
+
+
+# --- MakeMaker special_targets section:
+.SUFFIXES : .xs .c .C .cpp .i .s .cxx .cc $(OBJ_EXT)
+
+.PHONY: all config static dynamic test linkext manifest blibdirs clean realclean disttest distdir
+
 
 
 # --- MakeMaker c_o section:
@@ -237,68 +280,77 @@ PASTHRU = LIB="$(LIB)"\
 
 
 # --- MakeMaker top_targets section:
+all :: pure_all manifypods
+	$(NOECHO) $(NOOP)
 
-#all ::	config $(INST_PM) subdirs linkext manifypods
-
-all :: pure_all htmlifypods manifypods
-	@$(NOOP)
 
 pure_all :: config pm_to_blib subdirs linkext
-	@$(NOOP)
+	$(NOECHO) $(NOOP)
 
 subdirs :: $(MYEXTLIB)
-	@$(NOOP)
+	$(NOECHO) $(NOOP)
 
-config :: Makefile $(INST_LIBDIR)/.exists
-	@$(NOOP)
+config :: $(FIRST_MAKEFILE) blibdirs
+	$(NOECHO) $(NOOP)
 
-config :: $(INST_ARCHAUTODIR)/.exists
-	@$(NOOP)
-
-config :: $(INST_AUTODIR)/.exists
-	@$(NOOP)
-
-$(INST_AUTODIR)/.exists :: /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h
-	@$(MKPATH) $(INST_AUTODIR)
-	@$(EQUALIZE_TIMESTAMP) /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h $(INST_AUTODIR)/.exists
-
-	-@$(CHMOD) $(PERM_RWX) $(INST_AUTODIR)
-
-$(INST_LIBDIR)/.exists :: /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h
-	@$(MKPATH) $(INST_LIBDIR)
-	@$(EQUALIZE_TIMESTAMP) /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h $(INST_LIBDIR)/.exists
-
-	-@$(CHMOD) $(PERM_RWX) $(INST_LIBDIR)
-
-$(INST_ARCHAUTODIR)/.exists :: /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h
-	@$(MKPATH) $(INST_ARCHAUTODIR)
-	@$(EQUALIZE_TIMESTAMP) /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h $(INST_ARCHAUTODIR)/.exists
-
-	-@$(CHMOD) $(PERM_RWX) $(INST_ARCHAUTODIR)
-
-config :: $(INST_MAN3DIR)/.exists
-	@$(NOOP)
-
-
-$(INST_MAN3DIR)/.exists :: /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h
-	@$(MKPATH) $(INST_MAN3DIR)
-	@$(EQUALIZE_TIMESTAMP) /usr/local/lib/perl5/5.6.1/sun4-solaris/CORE/perl.h $(INST_MAN3DIR)/.exists
-
-	-@$(CHMOD) $(PERM_RWX) $(INST_MAN3DIR)
-
-help:
+help :
 	perldoc ExtUtils::MakeMaker
 
-Version_check:
-	@$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) \
-		-MExtUtils::MakeMaker=Version_check \
-		-e "Version_check('$(MM_VERSION)')"
+
+# --- MakeMaker blibdirs section:
+blibdirs : $(INST_LIBDIR)$(DFSEP).exists $(INST_ARCHLIB)$(DFSEP).exists $(INST_AUTODIR)$(DFSEP).exists $(INST_ARCHAUTODIR)$(DFSEP).exists $(INST_BIN)$(DFSEP).exists $(INST_SCRIPT)$(DFSEP).exists $(INST_MAN1DIR)$(DFSEP).exists $(INST_MAN3DIR)$(DFSEP).exists
+	$(NOECHO) $(NOOP)
+
+# Backwards compat with 6.18 through 6.25
+blibdirs.ts : blibdirs
+	$(NOECHO) $(NOOP)
+
+$(INST_LIBDIR)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_LIBDIR)
+	$(NOECHO) $(CHMOD) 755 $(INST_LIBDIR)
+	$(NOECHO) $(TOUCH) $(INST_LIBDIR)$(DFSEP).exists
+
+$(INST_ARCHLIB)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_ARCHLIB)
+	$(NOECHO) $(CHMOD) 755 $(INST_ARCHLIB)
+	$(NOECHO) $(TOUCH) $(INST_ARCHLIB)$(DFSEP).exists
+
+$(INST_AUTODIR)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_AUTODIR)
+	$(NOECHO) $(CHMOD) 755 $(INST_AUTODIR)
+	$(NOECHO) $(TOUCH) $(INST_AUTODIR)$(DFSEP).exists
+
+$(INST_ARCHAUTODIR)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_ARCHAUTODIR)
+	$(NOECHO) $(CHMOD) 755 $(INST_ARCHAUTODIR)
+	$(NOECHO) $(TOUCH) $(INST_ARCHAUTODIR)$(DFSEP).exists
+
+$(INST_BIN)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_BIN)
+	$(NOECHO) $(CHMOD) 755 $(INST_BIN)
+	$(NOECHO) $(TOUCH) $(INST_BIN)$(DFSEP).exists
+
+$(INST_SCRIPT)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_SCRIPT)
+	$(NOECHO) $(CHMOD) 755 $(INST_SCRIPT)
+	$(NOECHO) $(TOUCH) $(INST_SCRIPT)$(DFSEP).exists
+
+$(INST_MAN1DIR)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_MAN1DIR)
+	$(NOECHO) $(CHMOD) 755 $(INST_MAN1DIR)
+	$(NOECHO) $(TOUCH) $(INST_MAN1DIR)$(DFSEP).exists
+
+$(INST_MAN3DIR)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_MAN3DIR)
+	$(NOECHO) $(CHMOD) 755 $(INST_MAN3DIR)
+	$(NOECHO) $(TOUCH) $(INST_MAN3DIR)$(DFSEP).exists
+
 
 
 # --- MakeMaker linkext section:
 
 linkext :: $(LINKTYPE)
-	@$(NOOP)
+	$(NOECHO) $(NOOP)
 
 
 # --- MakeMaker dlsyms section:
@@ -306,11 +358,8 @@ linkext :: $(LINKTYPE)
 
 # --- MakeMaker dynamic section:
 
-## $(INST_PM) has been moved to the all: target.
-## It remains here for awhile to allow for old usage: "make dynamic"
-#dynamic :: Makefile $(INST_DYNAMIC) $(INST_BOOT) $(INST_PM)
-dynamic :: Makefile $(INST_DYNAMIC) $(INST_BOOT)
-	@$(NOOP)
+dynamic :: $(FIRST_MAKEFILE) $(INST_DYNAMIC) $(INST_BOOT)
+	$(NOECHO) $(NOOP)
 
 
 # --- MakeMaker dynamic_bs section:
@@ -325,35 +374,28 @@ BOOTSTRAP =
 
 ## $(INST_PM) has been moved to the all: target.
 ## It remains here for awhile to allow for old usage: "make static"
-#static :: Makefile $(INST_STATIC) $(INST_PM)
-static :: Makefile $(INST_STATIC)
-	@$(NOOP)
+static :: $(FIRST_MAKEFILE) $(INST_STATIC)
+	$(NOECHO) $(NOOP)
 
 
 # --- MakeMaker static_lib section:
 
 
-# --- MakeMaker htmlifypods section:
-
-htmlifypods : pure_all
-	@$(NOOP)
-
-
 # --- MakeMaker manifypods section:
-POD2MAN_EXE = /usr/local/bin/pod2man
-POD2MAN = $(PERL) -we '%m=@ARGV;for (keys %m){' \
--e 'next if -e $$m{$$_} && -M $$m{$$_} < -M $$_ && -M $$m{$$_} < -M "Makefile";' \
--e 'print "Manifying $$m{$$_}\n";' \
--e 'system(qq[$$^X ].q["-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" $(POD2MAN_EXE) ].qq[$$_>$$m{$$_}])==0 or warn "Couldn\047t install $$m{$$_}\n";' \
--e 'chmod(oct($(PERM_RW))), $$m{$$_} or warn "chmod $(PERM_RW) $$m{$$_}: $$!\n";}'
 
-manifypods : pure_all Tk.pod \
-	Tk.pm
-	@$(POD2MAN) \
+POD2MAN_EXE = $(PERLRUN) "-MExtUtils::Command::MM" -e pod2man "--"
+POD2MAN = $(POD2MAN_EXE)
+
+
+manifypods : pure_all  \
 	Tk.pod \
-	$(INST_MAN3DIR)/Weaving::Tablet::Tk.$(MAN3EXT) \
-	Tk.pm \
-	$(INST_MAN3DIR)/Weaving::Tablet::Tk.$(MAN3EXT)
+	Tk.pm
+	$(NOECHO) $(POD2MAN) --section=3 --perm_rw=$(PERM_RW) \
+	  Tk.pod $(INST_MAN3DIR)/Weaving::Tablet::Tk.$(MAN3EXT) \
+	  Tk.pm $(INST_MAN3DIR)/Weaving::Tablet::Tk.$(MAN3EXT) 
+
+
+
 
 # --- MakeMaker processPL section:
 
@@ -365,72 +407,147 @@ manifypods : pure_all Tk.pod \
 
 # none
 
+# --- MakeMaker clean_subdirs section:
+clean_subdirs :
+	$(NOECHO) $(NOOP)
+
+
 # --- MakeMaker clean section:
 
 # Delete temporary files but do not touch installed files. We don't delete
 # the Makefile here so a later make realclean still has a makefile to use.
 
-clean ::
-	-rm -rf ./blib $(MAKE_APERL_FILE) $(INST_ARCHAUTODIR)/extralibs.all perlmain.c mon.out core core.*perl.*.? *perl.core so_locations pm_to_blib *$(OBJ_EXT) *$(LIB_EXT) perl.exe $(BOOTSTRAP) $(BASEEXT).bso $(BASEEXT).def $(BASEEXT).exp
-	-mv Makefile Makefile.old $(DEV_NULL)
+clean :: clean_subdirs
+	- $(RM_F) \
+	  *$(LIB_EXT) core \
+	  core.[0-9] $(INST_ARCHAUTODIR)/extralibs.all \
+	  core.[0-9][0-9] $(BASEEXT).bso \
+	  pm_to_blib.ts core.[0-9][0-9][0-9][0-9] \
+	  $(BASEEXT).x $(BOOTSTRAP) \
+	  perl$(EXE_EXT) tmon.out \
+	  *$(OBJ_EXT) pm_to_blib \
+	  $(INST_ARCHAUTODIR)/extralibs.ld blibdirs.ts \
+	  core.[0-9][0-9][0-9][0-9][0-9] *perl.core \
+	  core.*perl.*.? $(MAKE_APERL_FILE) \
+	  perl $(BASEEXT).def \
+	  core.[0-9][0-9][0-9] mon.out \
+	  lib$(BASEEXT).def perlmain.c \
+	  perl.exe so_locations \
+	  $(BASEEXT).exp 
+	- $(RM_RF) \
+	  blib 
+	- $(MV) $(FIRST_MAKEFILE) $(MAKEFILE_OLD) $(DEV_NULL)
+
+
+# --- MakeMaker realclean_subdirs section:
+realclean_subdirs :
+	$(NOECHO) $(NOOP)
 
 
 # --- MakeMaker realclean section:
+# Delete temporary files (via clean) and also delete dist files
+realclean purge ::  clean realclean_subdirs
+	- $(RM_F) \
+	  $(MAKEFILE_OLD) $(FIRST_MAKEFILE) 
+	- $(RM_RF) \
+	  $(DISTVNAME) 
 
-# Delete temporary files (via clean) and also delete installed files
-realclean purge ::  clean
-	rm -rf $(INST_AUTODIR) $(INST_ARCHAUTODIR)
-	rm -f  $(INST_LIBDIR)/Tk.pod $(INST_LIBDIR)/Tk.pm
-	rm -rf Makefile Makefile.old
+
+# --- MakeMaker metafile section:
+metafile : create_distdir
+	$(NOECHO) $(ECHO) Generating META.yml
+	$(NOECHO) $(ECHO) '--- #YAML:1.0' > META_new.yml
+	$(NOECHO) $(ECHO) 'name:               Weaving-Tablet-Tk' >> META_new.yml
+	$(NOECHO) $(ECHO) 'version:            0.8.2' >> META_new.yml
+	$(NOECHO) $(ECHO) 'abstract:           Tk user interface to Weaving::Tablet designer' >> META_new.yml
+	$(NOECHO) $(ECHO) 'author:' >> META_new.yml
+	$(NOECHO) $(ECHO) '    - Michael Houghton <herveus@cpan.org>' >> META_new.yml
+	$(NOECHO) $(ECHO) 'license:            unknown' >> META_new.yml
+	$(NOECHO) $(ECHO) 'distribution_type:  module' >> META_new.yml
+	$(NOECHO) $(ECHO) 'configure_requires:' >> META_new.yml
+	$(NOECHO) $(ECHO) '    ExtUtils::MakeMaker:  0' >> META_new.yml
+	$(NOECHO) $(ECHO) 'build_requires:' >> META_new.yml
+	$(NOECHO) $(ECHO) '    ExtUtils::MakeMaker:  0' >> META_new.yml
+	$(NOECHO) $(ECHO) 'requires:' >> META_new.yml
+	$(NOECHO) $(ECHO) '    Tk:               800.012' >> META_new.yml
+	$(NOECHO) $(ECHO) '    Tk::ColorEditor:  0' >> META_new.yml
+	$(NOECHO) $(ECHO) '    Tk::FileSelect:   0' >> META_new.yml
+	$(NOECHO) $(ECHO) '    Tk::FontDialog:   0' >> META_new.yml
+	$(NOECHO) $(ECHO) '    Tk::HList:        0' >> META_new.yml
+	$(NOECHO) $(ECHO) 'no_index:' >> META_new.yml
+	$(NOECHO) $(ECHO) '    directory:' >> META_new.yml
+	$(NOECHO) $(ECHO) '        - t' >> META_new.yml
+	$(NOECHO) $(ECHO) '        - inc' >> META_new.yml
+	$(NOECHO) $(ECHO) 'generated_by:       ExtUtils::MakeMaker version 6.50' >> META_new.yml
+	$(NOECHO) $(ECHO) 'meta-spec:' >> META_new.yml
+	$(NOECHO) $(ECHO) '    url:      http://module-build.sourceforge.net/META-spec-v1.4.html' >> META_new.yml
+	$(NOECHO) $(ECHO) '    version:  1.4' >> META_new.yml
+	-$(NOECHO) $(MV) META_new.yml $(DISTVNAME)/META.yml
+
+
+# --- MakeMaker signature section:
+signature :
+	cpansign -s
 
 
 # --- MakeMaker dist_basics section skipped.
 
 # --- MakeMaker dist_core section skipped.
 
-# --- MakeMaker dist_dir section skipped.
+# --- MakeMaker distdir section skipped.
 
 # --- MakeMaker dist_test section skipped.
 
 # --- MakeMaker dist_ci section skipped.
 
+# --- MakeMaker distmeta section:
+distmeta : create_distdir metafile
+	$(NOECHO) cd $(DISTVNAME) && $(ABSPERLRUN) -MExtUtils::Manifest=maniadd -e 'eval { maniadd({q{META.yml} => q{Module meta-data (added by MakeMaker)}}) } ' \
+	  -e '    or print "Could not add META.yml to MANIFEST: $${'\''@'\''}\n"' --
+
+
+
+# --- MakeMaker distsignature section:
+distsignature : create_distdir
+	$(NOECHO) cd $(DISTVNAME) && $(ABSPERLRUN) -MExtUtils::Manifest=maniadd -e 'eval { maniadd({q{SIGNATURE} => q{Public-key signature (added by MakeMaker)}}) } ' \
+	  -e '    or print "Could not add SIGNATURE to MANIFEST: $${'\''@'\''}\n"' --
+	$(NOECHO) cd $(DISTVNAME) && $(TOUCH) SIGNATURE
+	cd $(DISTVNAME) && cpansign -s
+
+
+
 # --- MakeMaker install section skipped.
 
 # --- MakeMaker force section:
 # Phony target to force checking subdirectories.
-FORCE:
-	@$(NOOP)
+FORCE :
+	$(NOECHO) $(NOOP)
 
 
 # --- MakeMaker perldepend section:
 
 
 # --- MakeMaker makefile section:
-
-# We take a very conservative approach here, but it\'s worth it.
+# We take a very conservative approach here, but it's worth it.
 # We move Makefile to Makefile.old here to avoid gnu make looping.
-Makefile : Makefile.PL $(CONFIGDEP)
-	@echo "Makefile out-of-date with respect to $?"
-	@echo "Cleaning current config before rebuilding Makefile..."
-	-@$(RM_F) Makefile.old
-	-@$(MV) Makefile Makefile.old
-	-$(MAKE) -f Makefile.old clean $(DEV_NULL) || $(NOOP)
-	$(PERL) "-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" Makefile.PL 
-	@echo "==> Your Makefile has been rebuilt. <=="
-	@echo "==> Please rerun the make command.  <=="
+$(FIRST_MAKEFILE) : Makefile.PL $(CONFIGDEP)
+	$(NOECHO) $(ECHO) "Makefile out-of-date with respect to $?"
+	$(NOECHO) $(ECHO) "Cleaning current config before rebuilding Makefile..."
+	-$(NOECHO) $(RM_F) $(MAKEFILE_OLD)
+	-$(NOECHO) $(MV)   $(FIRST_MAKEFILE) $(MAKEFILE_OLD)
+	- $(MAKE) $(USEMAKEFILE) $(MAKEFILE_OLD) clean $(DEV_NULL)
+	$(PERLRUN) Makefile.PL 
+	$(NOECHO) $(ECHO) "==> Your Makefile has been rebuilt. <=="
+	$(NOECHO) $(ECHO) "==> Please rerun the $(MAKE) command.  <=="
 	false
 
-# To change behavior to :: would be nice, but would break Tk b9.02
-# so you find such a warning below the dist target.
-#Makefile :: $(VERSION_FROM)
-#	@echo "Warning: Makefile possibly out of date with $(VERSION_FROM)"
 
 
 # --- MakeMaker staticmake section:
 
 # --- MakeMaker makeaperl section ---
 MAP_TARGET    = ../perl
-FULLPERL      = /usr/bin/perl
+FULLPERL      = /usr/local/bin/perl
 
 
 # --- MakeMaker test section:
@@ -443,13 +560,17 @@ TESTDB_SW = -d
 
 testdb :: testdb_$(LINKTYPE)
 
-test :: $(TEST_TYPE)
+test :: $(TEST_TYPE) subdirs-test
+
+subdirs-test ::
+	$(NOECHO) $(NOOP)
+
 
 test_dynamic :: pure_all
-	PERL_DL_NONLAZY=1 $(FULLPERL) -I$(INST_ARCHLIB) -I$(INST_LIB) -I$(PERL_ARCHLIB) -I$(PERL_LIB) $(TEST_FILE)
+	PERL_DL_NONLAZY=1 $(FULLPERLRUN) "-I$(INST_LIB)" "-I$(INST_ARCHLIB)" $(TEST_FILE)
 
 testdb_dynamic :: pure_all
-	PERL_DL_NONLAZY=1 $(FULLPERL) $(TESTDB_SW) -I$(INST_ARCHLIB) -I$(INST_LIB) -I$(PERL_ARCHLIB) -I$(PERL_LIB) $(TEST_FILE)
+	PERL_DL_NONLAZY=1 $(FULLPERLRUN) $(TESTDB_SW) "-I$(INST_LIB)" "-I$(INST_ARCHLIB)" $(TEST_FILE)
 
 test_ : test_dynamic
 
@@ -459,16 +580,31 @@ testdb_static :: testdb_dynamic
 
 # --- MakeMaker ppd section:
 # Creates a PPD (Perl Package Description) for a binary distribution.
-ppd:
-	@$(PERL) -e "print qq{<SOFTPKG NAME=\"Weaving-Tablet-Tk\" VERSION=\"0,8,2,0\">\n}. qq{\t<TITLE>Weaving-Tablet-Tk</TITLE>\n}. qq{\t<ABSTRACT>Tk user interface to Weaving::Tablet designer</ABSTRACT>\n}. qq{\t<AUTHOR>Michael Houghton &lt;herveus\@cpan.org&gt;</AUTHOR>\n}. qq{\t<IMPLEMENTATION>\n}. qq{\t\t<DEPENDENCY NAME=\"Tk\" VERSION=\"800,012,0,0\" />\n}. qq{\t\t<DEPENDENCY NAME=\"Tk-ColorEditor\" VERSION=\"0,0,0,0\" />\n}. qq{\t\t<DEPENDENCY NAME=\"Tk-FileSelect\" VERSION=\"0,0,0,0\" />\n}. qq{\t\t<DEPENDENCY NAME=\"Tk-FontDialog\" VERSION=\"0,0,0,0\" />\n}. qq{\t\t<DEPENDENCY NAME=\"Tk-HList\" VERSION=\"0,0,0,0\" />\n}. qq{\t\t<OS NAME=\"$(OSNAME)\" />\n}. qq{\t\t<ARCHITECTURE NAME=\"sun4-solaris\" />\n}. qq{\t\t<CODEBASE HREF=\"\" />\n}. qq{\t</IMPLEMENTATION>\n}. qq{</SOFTPKG>\n}" > Weaving-Tablet-Tk.ppd
+ppd :
+	$(NOECHO) $(ECHO) '<SOFTPKG NAME="$(DISTNAME)" VERSION="0,8,2,0">' > $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '    <TITLE>$(DISTNAME)</TITLE>' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '    <ABSTRACT>Tk user interface to Weaving::Tablet designer</ABSTRACT>' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '    <AUTHOR>Michael Houghton &lt;herveus@cpan.org&gt;</AUTHOR>' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '    <IMPLEMENTATION>' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="Tk" VERSION="800,012,0,0" />' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="Tk-ColorEditor" VERSION="0,0,0,0" />' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="Tk-FileSelect" VERSION="0,0,0,0" />' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="Tk-FontDialog" VERSION="0,0,0,0" />' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="Tk-HList" VERSION="0,0,0,0" />' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '        <OS NAME="$(OSNAME)" />' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '        <ARCHITECTURE NAME="darwin-2level-5.1" />' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '        <CODEBASE HREF="" />' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '    </IMPLEMENTATION>' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '</SOFTPKG>' >> $(DISTNAME).ppd
+
 
 # --- MakeMaker pm_to_blib section:
 
-pm_to_blib: $(TO_INST_PM)
-	@$(PERL) "-I$(INST_ARCHLIB)" "-I$(INST_LIB)" \
-	"-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" -MExtUtils::Install \
-        -e "pm_to_blib({qw{$(PM_TO_BLIB)}},'$(INST_LIB)/auto','$(PM_FILTER)')"
-	@$(TOUCH) $@
+pm_to_blib : $(TO_INST_PM)
+	$(NOECHO) $(ABSPERLRUN) -MExtUtils::Install -e 'pm_to_blib({@ARGV}, '\''$(INST_LIB)/auto'\'', '\''$(PM_FILTER)'\'')' -- \
+	  Tk.pod $(INST_LIB)/Weaving/Tablet/Tk.pod \
+	  Tk.pm $(INST_LIB)/Weaving/Tablet/Tk.pm 
+	$(NOECHO) $(TOUCH) pm_to_blib
 
 
 # --- MakeMaker selfdocument section:

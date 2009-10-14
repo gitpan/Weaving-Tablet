@@ -11,6 +11,7 @@ use Weaving::Tablet::Tk;
 $loaded = 1;
 print "ok 1\n";
 
+exit;
 ######################### End of black magic.
 
 # Insert your test code below (better if it prints "ok 13"

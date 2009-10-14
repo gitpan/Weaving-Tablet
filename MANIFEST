@@ -46,3 +46,4 @@ Tk/Tk.pm
 Tk/Tk.pod
 Tk/TODO
 Tk/woof
+META.yml                                 Module meta-data (added by MakeMaker)
