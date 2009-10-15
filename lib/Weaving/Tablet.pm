@@ -5,7 +5,7 @@ use strict;
 use Carp;
 
 our $VERSION;
-use version; $VERSION = qv('0.8.4');
+use version; $VERSION = qv('0.8.5');
 
 # Other recommended modules (uncomment to use):
 #  use IO::Prompt;

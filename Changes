@@ -4,3 +4,5 @@ Revision history for Weaving-Tablet
        Restructure files to modern layout.
        Fix list of dependencies.
 
+0.8.5  Thu Oct 15 18:35:00 2009
+       Fix version in Weaving::Tablet::Tk.

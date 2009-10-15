@@ -11,6 +11,8 @@ require Tk::ColorEditor;
 use Data::Dumper;
 
 our @ISA = qw(Weaving::Tablet);
+our $VERSION;
+use version; $VERSION = qv('0.8.4');
 
 # Preloaded methods go here.
 my %_windowlist = ();
