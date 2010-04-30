@@ -6,3 +6,13 @@ Revision history for Weaving-Tablet
 
 0.8.5  Thu Oct 15 18:35:00 2009
        Fix version in Weaving::Tablet::Tk.
+
+0.9.0	Tue Apr 27 2010
+		Convert to using Moose
+		Implement Weaving::Tablet::Card and refactor Weaving::Tablet accordingly
+		Modify Weaving::Tablet::Tk to use revised API
+
+0.9.1	Fri Apr 30 2010
+		Change canvas handling to not use a bazillion tags
+		Tags are now handled by hand by wrapping select canvas methods
+		Things runs much faster now

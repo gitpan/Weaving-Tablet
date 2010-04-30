@@ -4,18 +4,45 @@ use warnings;
 use strict;
 use Carp;
 use Weaving::Tablet;
+use Tk;
 require Tk::HList;
 require Tk::FileSelect;
 require Tk::FontDialog;
 require Tk::ColorEditor;
 use Data::Dumper;
+use Moose;
+use namespace::autoclean;
 
-our @ISA = qw(Weaving::Tablet);
+has 'pattern' =>
+  ( isa => 'Weaving::Tablet', is => 'ro', writer => '_set_pattern' );
+has 'window' =>
+  ( isa => 'Tk::MainWindow', is => 'ro', writer => '_set_window' );
+has 'canvas' =>
+  ( isa => 'Tk::Frame', is => 'ro', writer => '_set_canvas' );
+has 'small_font' => (
+    isa     => 'Str',
+    is      => 'ro',
+    writer  => '_set_small_font',
+    default => '-misc-fixed-medium-r-normal--10-100-75-75-c-60-iso8859-1'
+);
+has 'row_spacing' => (isa => 'Int', is => 'rw', default => 12);
+has 'col_spacing' => (isa => 'Int', is => 'rw', default => 9);
+sub half_col_size { my $self = shift; return int($self->col_spacing/2); }
+has 'current_row' => (isa => 'Int', is => 'rw', default => 0);
+has 'current_card' => (isa => 'Int', is => 'rw', default => 0);
+has 'smooth' => (isa => 'Bool', is => 'rw', default => 0);
+has 'overlap' => (isa => 'Bool', is => 'rw', default => 0);
+has 'draw_grid'=> (isa => 'Bool', is => 'rw', default => 0);
+has 'show_floats' => (isa => 'Bool', is => 'rw', default => 0);
+has 'float_length' => (isa => 'Int', is => 'rw', default => 3);
+has 'background_color' => (isa => 'Str', is => 'rw', default => 'white');
+has 'canvas_tags' => (isa => 'HashRef', is => 'ro', default => sub { {} });
+
 our $VERSION;
-use version; $VERSION = qv('0.8.4');
+use version; $VERSION = qv('0.9.1');
 
 # Preloaded methods go here.
-my %_windowlist = ();
+my %_windowlist;
 
 sub new_pattern
 {
@@ -27,13 +54,16 @@ sub new_pattern
     if ( exists( $args{file} ) )
     {
         $this->window->Busy if ref($this);
-        $pattern = $this->new_from_file( $args{file} );
+        $pattern = Weaving::Tablet->new( file_name => $args{file} );
         $this->window->Unbusy if ref($this);
     }
     else
     {
         $this->window->Busy if ref($this);
-        $pattern = $this->new_from_scratch( $args{cards}, $args{rows} );
+        $pattern = Weaving::Tablet->new(
+            number_of_cards => $args{cards},
+            pattern_length  => $args{rows}
+        );
         $this->window->Unbusy if ref($this);
     }
     return unless defined $pattern;
@@ -42,40 +72,31 @@ sub new_pattern
     my $win = new MainWindow;
     $_windowlist{MW} = $win unless exists $args{mw};
     $win->iconname('snartemo');
-    $win->title("Untitled");
-    $pattern->{window} = $win;
-    $pattern->file_name;
+    $win->title( $args{file} || "Untitled" );
+
+    my $self = __PACKAGE__->new( pattern => $pattern, 
+        window => $win,
+        canvas => $win->Scrolled(
+            'Canvas',
+            -background => 'white',
+            -height     => 250,
+            -width      => 200,
+            )->pack(qw/-expand yes -fill both/),
+        );
+
     $_windowlist{$win} = $win;
-    $pattern->create_menu;
-    $pattern->set_constants;
 
-    $pattern->{canvas} = $win->Scrolled(
-        'Canvas',
-        -background => $pattern->background_color,
-        -height     => 250,
-        -width      => 200,
-    )->pack(qw/-expand yes -fill both/);
+    $self->create_menu;
 
-    $pattern->draw_pattern;
-    return $pattern;
-}
-
-sub initialize
-{
-    my $self = shift;
-
-    foreach my $k ( grep /^_/, keys %$self )
-    {
-        $self->{$k} = undef;
-    }
-    $self->SUPER::initialize(@_);
+    $self->draw_pattern;
+    return $self;
 }
 
 sub close_pattern
 {
     my $self = shift;
 
-    if ( $self->dirty )
+    if ( $self->pattern->dirty )
     {
         my $button = $self->window->Dialog(
             -text           => "Save pattern?",
@@ -86,8 +107,8 @@ sub close_pattern
         if ( $button eq 'Save' )
         {
             defined( $self->file_name )
-                ? $self->save_pattern
-                : $self->save_pattern_as;
+              ? $self->save_pattern
+              : $self->save_pattern_as;
         }
     }
 
@@ -97,124 +118,152 @@ sub close_pattern
 
 sub create_menu
 {
-    my $pattern = shift;
-    my $w       = $pattern->window;
+    my $self = shift;
+    my $w    = $self->window;
 
     my $menuitems = [
-        [   Cascade    => '~File',
+        [
+            Cascade    => '~File',
             -menuitems => [
-                [   Button   => '~New...',
-                    -command => sub { $pattern->make_new_from_scratch; }
+                [
+                    Button   => '~New...',
+                    -command => sub { $self->make_new_from_scratch; }
                 ],
-                [   Button   => '~Open...',
-                    -command => sub { $pattern->make_new_from_file; }
+                [
+                    Button   => '~Open...',
+                    -command => sub { $self->make_new_from_file; }
                 ],
-                [   Button   => 'Close',
-                    -command => sub { $pattern->close_pattern; },
+                [
+                    Button   => 'Close',
+                    -command => sub { $self->close_pattern; },
                 ],
                 [ Separator => '' ],
-                [   Button   => '~Save',
+                [
+                    Button   => '~Save',
                     -command => sub {
-                        defined( $pattern->file_name )
-                            ? $pattern->save_pattern
-                            : $pattern->save_pattern_as;
-                        }
+                        defined( $self->file_name )
+                          ? $self->save_pattern
+                          : $self->save_pattern_as;
+                      }
                 ],
-                [   Button   => 'Save as...',
-                    -command => sub { $pattern->save_pattern_as; }
+                [
+                    Button   => 'Save as...',
+                    -command => sub { $self->save_pattern_as; }
                 ],
                 [ Separator => '' ],
-                [   Button   => 'Revert',
-                    -command => sub { $pattern->revert_pattern; }
+                [
+                    Button   => 'Reload',
+                    -command => sub { $self->revert_pattern; }
                 ],
-                [   Button   => 'Quit',
+                [
+                    Button   => 'Quit',
                     -command => sub {
                         exit;
-                        }
+                      }
                 ],
             ]
         ],
-        [   Cascade    => '~Edit',
+        [
+            Cascade    => '~Edit',
             -menuitems => [
-                [   Checkbutton => 'Smooth',
-                    -variable   => \$pattern->{_smooth},
+                [
+                    Checkbutton => 'Smooth',
+                    -variable   => \$self->{smooth},
                     -command    => sub {
-                        $pattern->canvas->itemconfigure( 'turn',
-                            -smooth => $pattern->smooth );
-                        }
+                        $self->canvas->itemconfigure( 'turn',
+                            -smooth => $self->smooth );
+                      }
                 ],
-                [   Checkbutton => 'Grid',
-                    -variable   => \$pattern->{_draw_grid},
+                [
+                    Checkbutton => 'Grid',
+                    -variable   => \$self->{draw_grid},
                     -command    => sub {
-                        $pattern->canvas->itemconfigure( 'grid',
-                            -outline => $pattern->draw_grid
+                        $self->canvas->itemconfigure( 'grid',
+                            -outline => $self->draw_grid
                             ? 'black'
                             : undef );
-                        }
+                      }
                 ],
-                [   Checkbutton => 'Overlap',
-                    -variable   => \$pattern->{_overlap},
+                [
+                    Checkbutton => 'Overlap',
+                    -variable   => \$self->{overlap},
                     -command    => sub {
-                        $pattern->update_pattern;
-                        }
+                        $self->update_pattern;
+                      }
                 ],
                 [ Separator => '' ],
-                [   Button   => 'Background Color',
-                    -command => sub { $pattern->bg_color; }
+                [
+                    Button   => 'Background Color',
+                    -command => sub { $self->bg_color; }
                 ],
-                [   Button   => 'white background',
-                    -command => sub { $pattern->bg_color_white; }
+                [
+                    Button   => 'white background',
+                    -command => sub { $self->bg_color_white; }
                 ],
-                [   Button   => 'grey background',
-                    -command => sub { $pattern->bg_color_gray; }
+                [
+                    Button   => 'grey background',
+                    -command => sub { $self->bg_color_gray; }
                 ],
                 [ Separator => '' ],
-                [   Button   => 'Set float length...',
-                    -command => sub { $pattern->set_float_length; }
+                [
+                    Button   => 'Set float length...',
+                    -command => sub { $self->set_float_length; }
                 ],
-                [   Checkbutton => 'Show Floats',
-                    -variable   => \$pattern->{_float_pattern},
+                [
+                    Checkbutton => 'Show Floats',
+                    -variable   => \$self->{show_floats},
                     -command    => sub {
-                        $pattern->float_pattern;
-                        $pattern->update_pattern;
-                        }
+                        $self->pattern->float_pattern;
+                        $self->update_pattern;
+                      }
                 ],
                 [ Separator => '' ],
-                [   Button   => 'Dump Pattern',
-                    -command => sub { $pattern->dump; }
+                [
+                    Button   => 'Dump Pattern',
+                    -command => sub { $self->dump; }
                 ],
             ]
         ],
-        [   Cascade    => '~Pattern',
+        [
+            Cascade    => '~Pattern',
             -menuitems => [
-                [   Button   => 'Insert row...',
-                    -command => sub { $pattern->insert_row_cmd; }
+                [
+                    Button   => 'Insert row...',
+                    -command => sub { $self->insert_row_cmd; }
                 ],
-                [   Button   => 'Delete row...',
-                    -command => sub { $pattern->delete_row_cmd; }
+                [
+                    Button   => 'Delete row...',
+                    -command => sub { $self->delete_row_cmd; }
                 ],
-                [   Button   => 'Copy row...',
-                    -command => sub { $pattern->duplicate_row_cmd; }
-                ],
-                [ Separator => '' ],
-                [   Button   => 'Insert card...',
-                    -command => sub { $pattern->insert_card_cmd; }
-                ],
-                [   Button   => 'Delete card...',
-                    -command => sub { $pattern->delete_card_cmd; }
-                ],
-                [   Button   => 'Copy card...',
-                    -command => sub { $pattern->duplicate_card_cmd; }
+                [
+                    Button   => 'Copy row...',
+                    -command => sub { $self->duplicate_row_cmd; }
                 ],
                 [ Separator => '' ],
-                [   Button   => 'Edit colors',
-                    -command => sub { $pattern->edit_palette; }
+                [
+                    Button   => 'Insert card...',
+                    -command => sub { $self->insert_card_cmd; }
                 ],
-                [   Button   => 'Edit threading',
-                    -command => sub { $pattern->edit_threading; }
+                [
+                    Button   => 'Delete card...',
+                    -command => sub { $self->delete_card_cmd; }
                 ],
-                [   Button   => 'Show Twist',
-                    -command => sub { $pattern->show_twist; }
+                [
+                    Button   => 'Copy card...',
+                    -command => sub { $self->duplicate_card_cmd; }
+                ],
+                [ Separator => '' ],
+                [
+                    Button   => 'Edit colors',
+                    -command => sub { $self->edit_palette; }
+                ],
+                [
+                    Button   => 'Edit threading',
+                    -command => sub { $self->edit_threading; }
+                ],
+                [
+                    Button   => 'Show Twist',
+                    -command => sub { $self->show_twist; }
                 ],
             ]
         ]
@@ -237,18 +286,13 @@ sub create_menu
 sub file_name
 {
     my $self = shift;
-
-    # pass this up the line
-    my $fn = $self->SUPER::file_name(@_);
-    $fn ||= "Untitled";
-    $self->window->title($fn) if defined $self->window;
-    $fn;
+    return $self->pattern->file_name;
 }
 
 sub dump
 {
     my $self = shift;
-    print $self->dump_pattern;
+    print $self->pattern->dump_pattern;
     foreach my $k ( sort keys %$self )
     {
         next unless ref( $self->{$k} );
@@ -256,42 +300,11 @@ sub dump
     }
 }
 
-sub set_constants
-{
-    my $self = shift;
-
-    $self->{_small_font}
-        = '-misc-fixed-medium-r-normal--10-100-75-75-c-60-iso8859-1';
-    $self->{_row_spacing}      = 12;
-    $self->{_col_spacing}      = 9;
-    $self->{_half_col_size}    = 4;
-    $self->{_current_row}      = 0;
-    $self->{_current_card}     = 0;
-    $self->{_smooth}           = 0;
-    $self->{_draw_grid}        = 0;
-    $self->{_background_color} = 'white';
-    $self->{_overlap}          = 0;
-    $self->{_float_pattern}    = 0;
-    $self->{_float_length}     = 3;
-}
-
 sub show_twist
 {
     my $self  = shift;
-    my $twist = $self->print_twist;
+    my $twist = $self->pattern->print_twist;
     print $twist;
-}
-
-sub background_color
-{
-    shift->{_background_color};
-}
-
-sub overlap
-{
-    my $self = shift;
-    @_ and $self->{_overlap} = shift;
-    $self->{_overlap};
 }
 
 sub bg_color
@@ -302,67 +315,31 @@ sub bg_color
         -initialcolor => $self->background_color
     );
     return unless defined $bg_color;
-    $self->{_background_color} = $bg_color;
+    $self->background_color($bg_color);
     $self->canvas->configure( -background => $self->background_color );
 }
 
 sub bg_color_white
 {
     my $self = shift;
-    $self->{_background_color} = 'white';
+    $self->background_color('white');
     $self->canvas->configure( -background => $self->background_color );
 }
 
 sub bg_color_gray
 {
     my $self = shift;
-    $self->{_background_color} = 'gray';
+    $self->background_color('gray');
     $self->canvas->configure( -background => $self->background_color );
 }
 
 sub set_float_length
 {
     my $self         = shift;
-    my $float_length = $self->float_length_dlog( $self->{_float_length} );
+    my $float_length = $self->float_length_dlog( $self->float_length );
     return unless defined $float_length;
-    $self->{_float_length} = $float_length;
-    $self->update_pattern if $self->{_float_pattern};
-}
-
-sub window { return shift->{window}; }
-sub canvas { return shift->{canvas}; }
-
-sub current_row
-{
-    my $self = shift;
-    @_ and $self->{_current_row} = shift;
-    $self->{_current_row};
-}
-
-sub current_card
-{
-    my $self = shift;
-    @_ and $self->{_current_card} = shift;
-    $self->{_current_card};
-}
-
-sub small_font    { return shift->{_small_font}; }
-sub row_spacing   { return shift->{_row_spacing}; }
-sub col_spacing   { return shift->{_col_spacing}; }
-sub half_col_size { return shift->{_half_col_size}; }
-
-sub smooth
-{
-    my $self = shift;
-    @_ and $self->{_smooth} = shift;
-    $self->{_smooth};
-}
-
-sub draw_grid
-{
-    my $self = shift;
-    @_ and $self->{_draw_grid} = shift;
-    $self->{_draw_grid};
+    $self->float_length($float_length);
+    $self->update_pattern if $self->show_floats;
 }
 
 sub set_current_row
@@ -373,13 +350,13 @@ sub set_current_row
 
     do
     {
-        foreach my $t ( $canvas->gettags('current') )
+        foreach my $t ( $self->gettags('current') )
         {
             $r = unpack( 'x3a*', $t ) if $t =~ /^row\d+$/;
         }
     } unless defined $r;
     return unless defined $r;
-    $r %= $self->number_of_rows;
+    $r %= $self->pattern->number_of_rows;
     $canvas->move( 'currentrow', 0,
         ( $self->current_row - $r ) * $self->row_spacing );
     $self->current_row($r);
@@ -393,13 +370,13 @@ sub set_current_card
 
     do
     {
-        foreach my $t ( $canvas->gettags('current') )
+        foreach my $t ( $self->gettags('current') )
         {
             $c = unpack( 'x4a*', $t ) if $t =~ /^card\d+$/;
         }
     } unless defined $c;
     return unless defined $c;
-    $c %= $self->number_of_cards;
+    $c %= $self->pattern->number_of_cards;
     $canvas->move( 'currentcard',
         ( $c - $self->current_card ) * $self->col_spacing, 0 );
     $self->current_card($c);
@@ -414,88 +391,150 @@ sub update_pattern
 {
     my $pattern  = shift;
     my @cardlist = @_;
-    @cardlist or @cardlist = ( 0 .. $pattern->number_of_cards - 1 );
-    $pattern->float_pattern(@cardlist) if $pattern->{_float_pattern};
+    @cardlist or @cardlist = ( 0 .. $pattern->pattern->number_of_cards - 1 );
+    $pattern->pattern->float_pattern(@cardlist) if $pattern->show_floats;
     $pattern->_draw_pattern( 'update', @cardlist );
+}
+
+sub create
+{
+    my $self = shift;
+    my $type = shift;
+    my @args;
+    while (@_)
+    {
+        last if $_[0] =~ /^-[a-z]/;
+        push @args, shift;
+    }
+    my %args = @_;
+    my $canvas = $self->canvas;
+    my $tags = $args{-tags};
+    delete $args{-tags};
+    my $id = $canvas->create($type, @args, %args);
+    my $idtag = "id$id";
+    $canvas->addtag($idtag, 'withtag', $id);
+    for my $addtag (qw/turn grid SZ start rownumber/)
+    {
+        for my $tag (@$tags)
+        {
+            next unless $tag eq $addtag;
+            $canvas->addtag($tag, 'withtag', $id);
+            last;
+        }
+    }
+    for my $tag ($idtag, @$tags)
+    {
+        push @{$self->canvas_tags->{$tag}}, $id;
+        push @{$self->canvas_tags->{$idtag}}, $tag;
+    }
+}
+
+sub delete
+{
+    my $self = shift;
+    my @tags = @_;
+    my $canvas = $self->canvas;
+    for my $tag (@tags)
+    {
+        next unless exists $self->canvas_tags->{$tag};
+        $canvas->delete(@{$self->canvas_tags->{$tag}});
+    }
+}
+
+sub itemconfigure
+{
+    my $self = shift;
+    my ($tag, %args) = @_;
+    my $canvas = $self->canvas;
+    return unless exists $self->canvas_tags->{$tag};
+    for my $id (@{$self->canvas_tags->{$tag}})
+    {
+        $canvas->itemconfigure($id, %args);
+    }
 }
 
 sub _draw_pattern
 {
-    my $pattern  = shift;
-    my $canvas   = $pattern->canvas;
-    my $action   = shift;
-    my @cardlist = @_;
+    my $self  = shift;
+    my ($action, @cardlist) = @_;
+    my $pattern = $self->pattern;
+    my $canvas   = $self->canvas;
     @cardlist or @cardlist = ( 0 .. $pattern->number_of_cards - 1 );
 
-    $pattern->twist_pattern(@cardlist);
-    $pattern->color_pattern(@cardlist);
+    {
+        my @cardlist = map { ref($_) ? $_->[0] : $_; } @cardlist;
+        $pattern->twist_pattern(@cardlist);
+        $pattern->color_pattern(@cardlist);
+    }
 
     my ( $c8, $r8, $offset, $rs );
     do
     {
-        $canvas->delete('rownumber');
+        $self->delete('rownumber');
         foreach my $row ( 0 .. $pattern->number_of_rows - 1 )
         {
-            $r8 = ( -$row ) * $pattern->row_spacing - 8;
-            $canvas->create(
+            $r8 = ( -$row ) * $self->row_spacing - 8;
+            $self->create(
                 'text',
                 38, $r8,
                 -text   => $row + 1,
-                -font   => $pattern->small_font,
+                -font   => $self->small_font,
                 -anchor => 'e',
                 -tags   => [ 'rownumber', "row$row", "rownumber$row" ],
             );
         }
     } if $action eq 'draw';
-    $rs = $pattern->row_spacing;
-    my $poly_ht = $pattern->overlap ? $rs : $rs / 2;
-    my $half_col_size = $pattern->half_col_size;
+    $rs = $self->row_spacing;
+    my $poly_ht = $self->overlap ? $rs : $rs / 2;
+    my $half_col_size = $self->half_col_size;
     foreach my $card (@cardlist)
     {
         my $startrow = 0;
         ( $card, $startrow ) = @$card if ref($card);
-        $pattern->window->update;
-        $c8 = $card * $pattern->col_spacing + 8 + 48;
+        $self->window->update;
+        $c8 = $card * $self->col_spacing + 8 + 48;
         foreach my $row ( $startrow .. $pattern->number_of_rows - 1 )
         {
+#            $self->_draw_pick($card, $row);
             $r8 = ( -$row ) * $rs - 8;
-            $offset = ( index( '\|/', $pattern->turns( $card, $row ) ) - 1 )
-                * $half_col_size;
-            $offset *= $pattern->SZ($card) eq 'S' ? 1 : -1;
-            $canvas->delete( "turn$card" . "x$row" );
-            $canvas->create(
+            $offset =
+              ( index( '\|/', $pattern->card_turns($card)->[$row] ) - 1 ) *
+              $half_col_size;
+            $offset *= $pattern->cards->[$card]->SZ eq 'S' ? 1 : -1;
+            $self->delete( "turn$card" . "x$row" );
+            $self->create(
                 'polygon',
-                _poly_coords( $pattern, $r8, $c8, $offset, $poly_ht ),
-                -fill => $pattern->color_table(
+                _poly_coords( $self, $r8, $c8, $offset, $poly_ht ),
+                -fill => $pattern->color_table->[
                     $pattern->threading(
                         $card, $pattern->color( $card, $row )
-                    )
-                ),
+                    
+                )],
                 -tags =>
-                    [ 'turn', "row$row", "card$card", "turn$card" . "x$row" ],
+                  [ 'turn', "row$row", "card$card", "turn$card" . "x$row" ],
             );
-            $canvas->delete( "grid$card" . "x$row" );
-            $canvas->create(
+            $self->delete( "grid$card" . "x$row" );
+            $self->create(
                 'rectangle',
                 $c8 - $half_col_size - 1, $r8 + $rs / 2,
                 $c8 + $half_col_size,     $r8 - $rs / 2,
                 -fill    => undef,
-                -outline => $pattern->draw_grid ? 'black' : undef,
+                -outline => $self->draw_grid ? 'black' : undef,
                 -tags =>
-                    [ 'grid', "row$row", "card$card", "grid$card" . "x$row" ],
+                  [ 'grid', "row$row", "card$card", "grid$card" . "x$row" ],
             );
         }
-        $canvas->delete("float$card");
-        if ( $pattern->{_float_pattern} )
+        $self->delete("float$card");
+        if ( $self->show_floats )
         {
-            foreach my $float ( @{ $pattern->{floats}[$card] } )
+            foreach my $float ( @{ $pattern->{floats}[$card] } ) ##FIXME
             {
 
                 # add check against float_length here...
                 next
-                    unless ( $float->[1] - $float->[0] ) + 1
-                    >= $pattern->{_float_length};
-                $canvas->create(
+                  unless ( $float->[1] - $float->[0] ) + 1 >=
+                  $self->float_length;
+                $self->create(
                     'rectangle',
                     $c8 - $half_col_size - 1,
                     ( -$float->[0] ) * $rs - 8 + $rs / 2,
@@ -511,52 +550,52 @@ sub _draw_pattern
 
         if ( $action eq 'draw' )
         {
-            $canvas->delete("SZ$card");
-            $canvas->create(
+            $self->delete("SZ$card");
+            $self->create(
                 'text',
                 $c8, 24,
                 -anchor => 'center',
                 -text   => $pattern->SZ($card),
                 -tags   => [ 'SZ', "card$card", "SZ$card" ]
             );
-            $canvas->delete("starthole$card");
-            $canvas->create(
+            $self->delete("starthole$card");
+            $self->create(
                 'text',
                 $c8, 36,
                 -anchor => 'center',
                 -text   => chr( ord('A') + $pattern->start($card) ),
                 -tags =>
-                    [ 'starthole', 'start', "card$card", "starthole$card" ],
+                  [ 'starthole', 'start', "card$card", "starthole$card" ],
             );
             foreach my $hole ( 0 .. 3 )
             {
-                $canvas->delete( "start$card" . "hole$hole" );
-                $canvas->create(
+                $self->delete( "start$card" . "hole$hole" );
+                $self->create(
                     'rectangle',
                     $c8 - 3,
                     42 + 12 * $hole,
                     $c8 + 3,
                     52 + 12 * $hole,
-                    -fill => $pattern->color_table(
+                    -fill => $pattern->color_table->[
                         $pattern->threading( $card, $hole )
-                    ),
+                    ],
                     -tags =>
-                        [ 'start', "card$card", "start$card" . "hole$hole" ],
+                      [ 'start', "card$card", "start$card" . "hole$hole" ],
                 );
             }
         }
         elsif ( $action eq 'update' )
         {
-            $canvas->itemconfigure( "SZ$card", -text => $pattern->SZ($card) );
-            $canvas->itemconfigure( "starthole$card",
+            $self->itemconfigure( "SZ$card", -text => $pattern->SZ($card) );
+            $self->itemconfigure( "starthole$card",
                 -text => chr( ord('A') + $pattern->start($card) ) );
             foreach my $hole ( 0 .. 3 )
             {
-                $canvas->itemconfigure(
+                $self->itemconfigure(
                     "start$card" . "hole$hole",
-                    -fill => $pattern->color_table(
+                    -fill => $pattern->color_table->[
                         $pattern->threading( $card, $hole )
-                    )
+                    ]
                 );
             }
         }
@@ -564,10 +603,10 @@ sub _draw_pattern
 
     if ( $action eq 'draw' )
     {
-        $canvas->delete('holelabel');
+        $self->delete('holelabel');
         foreach my $hole ( 0 .. 3 )
         {
-            $canvas->create(
+            $self->create(
                 'text',
                 46, 47 + 12 * $hole,
                 -text => chr( ord('A') + $hole ),
@@ -582,36 +621,84 @@ sub _draw_pattern
         $canvas->delete('currentcard');
         $canvas->create(
             'rectangle',
-            40, -$pattern->current_row * $pattern->row_spacing - 10,
-            50, -$pattern->current_row * $pattern->row_spacing - 6,
+            40, -$self->current_row * $self->row_spacing - 10,
+            50, -$self->current_row * $self->row_spacing - 6,
             -fill => 'black',
             -tags => ['currentrow'],
         );
         $canvas->create(
             'rectangle',
-            $pattern->current_card * $pattern->col_spacing + 8 + 48 - 2, 4,
-            $pattern->current_card * $pattern->col_spacing + 8 + 48 + 2, 16,
+            $self->current_card * $self->col_spacing + 8 + 48 - 2, 4,
+            $self->current_card * $self->col_spacing + 8 + 48 + 2, 16,
             -fill => 'black',
             -tags => ['currentcard'],
         );
 
-        $canvas->bind( 'turn', '<1>',       sub { $pattern->flip_turn; } );
-        $canvas->bind( 'grid', '<1>',       sub { $pattern->flip_turn; } );
-        $canvas->bind( 'turn', '<Shift-1>', sub { $pattern->null_turn; } );
-        $canvas->bind( 'grid', '<Shift-1>', sub { $pattern->null_turn; } );
-        $canvas->bind( 'SZ',   '<1>',       sub { $pattern->flip_card; } );
-        $canvas->bind( 'start', '<1>', sub { $pattern->rotate_start(1); } );
+        $canvas->bind( 'turn', '<1>',       sub { $self->flip_turn; } );
+        $canvas->bind( 'grid', '<1>',       sub { $self->flip_turn; } );
+        $canvas->bind( 'turn', '<Shift-1>', sub { $self->null_turn; } );
+        $canvas->bind( 'grid', '<Shift-1>', sub { $self->null_turn; } );
+        $canvas->bind( 'SZ',   '<1>',       sub { $self->flip_card; } );
+        $canvas->bind( 'start', '<1>', sub { $self->rotate_start(1); } );
         $canvas->bind( 'start', '<Shift-1>',
-            sub { $pattern->rotate_start(-1); } );
-        $canvas->bind( 'start', '<2>', sub { $pattern->edit_threading; } );
-        $canvas->bind( 'start', '<3>', sub { $pattern->set_current_card; } );
-        $canvas->bind( 'rownumber', '<1>',
-            sub { $pattern->set_current_row; } );
-        $canvas->CanvasBind( '<Delete>', sub { $pattern->delete_cmd; } );
-        $canvas->CanvasBind( '<Insert>', sub { $pattern->insert_cmd; } );
+            sub { $self->rotate_start(-1); } );
+        $canvas->bind( 'start', '<2>', sub { $self->edit_threading; } );
+        $canvas->bind( 'start', '<3>', sub { $self->set_current_card; } );
+        $canvas->bind( 'rownumber', '<1>', sub { $self->set_current_row; } );
+        $canvas->CanvasBind( '<Delete>', sub { $self->delete_cmd; } );
+        $canvas->CanvasBind( '<Insert>', sub { $self->insert_cmd; } );
     } if $action eq 'draw';
 
     $canvas->configure( -scrollregion => [ $canvas->bbox("all") ] );
+}
+
+sub _draw_pick
+{
+    my $self = shift;
+    my ($card, $row) = @_;
+    my $pattern = $self->pattern;
+    my $canvas = $self->canvas;
+    my $rs = $self->row_spacing;
+    my $r8 = ( -$row ) * $rs - 8;
+    my $c8 = $card * $self->col_spacing + 8 + 48;
+    my $poly_ht = $self->overlap ? $rs : $rs / 2;
+    my $half_col_size = $self->half_col_size;
+    if (!$self->gettags("turn${card}x${row}"))
+    {
+        for my $pick (-1 .. 1)
+        {
+            my $offset = $pick * $half_col_size * ($pattern->cards->[$card]->SZ eq 'S' ? 1 : -1);
+            my $turn_tag = (qw/null fwd back/)[$pick];
+            $self->create(
+        'polygon',
+        _poly_coords( $self, $r8, $c8, $offset, $poly_ht ),
+        -fill => $pattern->color_table->[
+            $pattern->threading($card, $pattern->color( $card, $row ))],
+        -state => 'hidden',
+        -tags =>
+          [ 'turn', "row$row", "card$card", "turn$card" . "x$row" , "turn${card}x${row}$turn_tag"],
+    );
+        }
+        $self->create(
+            'rectangle',
+            $c8 - $half_col_size - 1, $r8 + $rs / 2,
+            $c8 + $half_col_size,     $r8 - $rs / 2,
+            -fill    => undef,
+            -outline => $self->draw_grid ? 'black' : undef,
+            -tags =>
+              [ 'grid', "row$row", "card$card", "grid$card" . "x$row" ],
+        );
+    }
+    my $pick = index( '\|/', $pattern->card_turns($card)->[$row] ) - 1;
+    $pick *= ($pattern->cards->[$card]->SZ eq 'S' ? 1 : -1);
+    my $turn_tag = (qw/null fwd back/)[$pick];
+    $self->itemconfigure("turn${card}x${row}fwd", -state => 'hidden');
+    $self->itemconfigure("turn${card}x${row}back", -state => 'hidden');
+    $self->itemconfigure("turn${card}x${row}null", -state => 'hidden');
+    $self->itemconfigure("turn${card}x${row}$turn_tag", 
+        -state => 'normal',
+        -fill => $pattern->color_table->[
+            $pattern->threading($card, $pattern->color( $card, $row ))],);
 }
 
 sub _poly_coords
@@ -621,7 +708,7 @@ sub _poly_coords
     if ( $offset != 0 )
     {
         return $pattern->overlap
-            ? (
+          ? (
             $c8 - $offset,
             $r8 + $poly_ht - 1,
             $c8 - $offset,
@@ -633,8 +720,8 @@ sub _poly_coords
             $c8 - $offset,
             $r8 + $poly_ht - 1,
             -smooth => $pattern->smooth,
-            )
-            : (
+          )
+          : (
             $c8 - $offset,
             $r8 + $poly_ht - 1,
             $c8 - $offset,
@@ -650,7 +737,7 @@ sub _poly_coords
             $c8 - $offset,
             $r8 + $poly_ht - 1,
             -smooth => $pattern->smooth,
-            );
+          );
     }
     else
     {
@@ -724,7 +811,7 @@ sub make_new_from_scratch
         -justify      => 'left',
     )->pack(qw/-side left -anchor w/);
 
-LOOP:
+  LOOP:
     {
         return if $d->Show eq 'Cancel';
         $msg = '';
@@ -733,11 +820,11 @@ LOOP:
         redo LOOP unless $msg eq '';
     }
     return
-        if $self->new_pattern(
-                mw    => $self->window,
-                cards => $cards,
-                rows  => $rows
-        );
+      if $self->new_pattern(
+        mw    => $self->window,
+        cards => $cards,
+        rows  => $rows
+      );
     $self->window->Dialog( -text => 'Could not create new pattern' )->Show;
     return;
 }
@@ -746,23 +833,23 @@ sub revert_pattern
 {
     my $self = shift;
 
-    return unless defined $self->file_name;
-    return unless -r $self->file_name;
+    return unless defined $self->pattern->file_name;
+    return unless -r $self->pattern->file_name;
 
     return
-        if $self->window->Dialog(
+      if $self->window->Dialog(
         -text           => "Revert to saved version (discard changes)?",
         -buttons        => [qw/OK Cancel/],
         -default_button => 'OK'
-        ) eq 'Cancel';
-    $self->load_pattern and $self->update_pattern;
+      ) eq 'Cancel';
+    $self->pattern->load_pattern and $self->update_pattern;
 }
 
 sub make_new_from_file
 {
     my $self = shift;
-    my $fs   = $self->fs_dlog(
-        { -filelabel => 'Load pattern from...', -create => 0 } );
+    my $fs =
+      $self->fs_dlog( { -filelabel => 'Load pattern from...', -create => 0 } );
     my $file = $fs->Show;
     return if $file eq '';
     return if $self->new_pattern( mw => $self->window, file => $file );
@@ -770,16 +857,26 @@ sub make_new_from_file
     return;
 }
 
+sub save_pattern
+{
+    my $self = shift;
+    open my $pat, '>', $self->pattern->file_name or return;
+    print $pat $self->pattern->dump_pattern;
+    close $pat;
+    return 1;
+}
+
 sub save_pattern_as
 {
     my $self = shift;
-    my $fs   = $self->fs_dlog(
-        { -filelabel => 'Save pattern as...', -create => 1 } );
+    my $fs =
+      $self->fs_dlog( { -filelabel => 'Save pattern as...', -create => 1 } );
     my $file = $fs->Show;
+    return if ! defined $file;
     return if $file eq '';
-    $self->file_name($file);
+    $self->pattern->file_name($file);
     return if $self->save_pattern;
-    $self->window->Dialog( -text => 'Could not save file as $file' )->Show;
+    $self->window->Dialog( -text => "Could not save file as $file" )->Show;
     return;
 }
 
@@ -886,7 +983,7 @@ sub refresh_card_threading
     my $pattern     = shift;
     my $card_canvas = shift;
     my $threading   = shift
-        || [ $pattern->threading( $pattern->current_card ) ];
+      || [ $pattern->threading( $pattern->current_card ) ];
 
     foreach my $h ( 0 .. 3 )
     {
@@ -906,21 +1003,31 @@ sub edit_threading
     my $t           = $pattern->threading_dlog->{dlog};
     my $card_canvas = $pattern->threading_dlog->{card_canvas};
 
-    $pattern->threading_dlog->{start}
-        = $pattern->start( $pattern->current_card );
+    $pattern->threading_dlog->{start} =
+      $pattern->start( $pattern->current_card );
     $pattern->refresh_color_list($list);
     $pattern->refresh_card_threading($card_canvas);
     $t->deiconify;
     $t->raise;
 }
 
+sub gettags
+{
+    my $self = shift;
+    my $tag = shift;
+    if ($tag eq 'current')
+    {
+        my $idtag = (grep {/^id\d+/} $self->canvas->gettags($tag))[0];
+        return @{$self->canvas_tags->{$idtag}};
+    }
+}
 sub flip_turn
 {
     my $pattern = shift;
     my $canvas  = $pattern->canvas;
 
     my ( $r, $c );
-    foreach my $t ( $canvas->gettags('current') )
+    foreach my $t ( $pattern->gettags('current') )
     {
         $r = unpack( 'x3a*', $t ) if $t =~ /^row\d+$/;
         $c = unpack( 'x4a*', $t ) if $t =~ /^card\d+$/;
@@ -928,7 +1035,7 @@ sub flip_turn
     return unless defined $r;
     return unless defined $c;
 
-    $pattern->turns( $c, $r, $pattern->turns( $c, $r ) eq '/' ? '\\' : '/' );
+    $pattern->pattern->turns( $c, $r, $pattern->pattern->turns( $c, $r ) eq '/' ? '\\' : '/' );
     $pattern->set_current_row($r);
     $pattern->set_current_card($c);
     $pattern->update_pattern( [ $c, $r ] );
@@ -940,7 +1047,7 @@ sub null_turn
     my $canvas  = $pattern->canvas;
 
     my ( $r, $c );
-    foreach my $t ( $canvas->gettags('current') )
+    foreach my $t ( $pattern->gettags('current') )
     {
         $r = unpack( 'x3a*', $t ) if $t =~ /^row\d+$/;
         $c = unpack( 'x4a*', $t ) if $t =~ /^card\d+$/;
@@ -948,7 +1055,7 @@ sub null_turn
     return unless defined $r;
     return unless defined $c;
 
-    $pattern->turns( $c, $r, '|' );
+    $pattern->pattern->turns( $c, $r, '|' );
     $pattern->set_current_row($r);
     $pattern->set_current_card($c);
     $pattern->update_pattern( [ $c, $r ] );
@@ -960,13 +1067,12 @@ sub flip_card
     my $canvas  = $pattern->canvas;
 
     my $c;
-    foreach my $t ( $canvas->gettags('current') )
+    foreach my $t ( $pattern->gettags('current') )
     {
         $c = unpack( 'x4a*', $t ) if $t =~ /^card\d+$/;
     }
     return unless defined $c;
-
-    $pattern->SZ( $c, $pattern->SZ($c) eq 'S' ? 'Z' : 'S' );
+    $pattern->pattern->SZ($c, $pattern->pattern->SZ($c) eq 'S' ? 'Z' : 'S');
     $pattern->set_current_card($c);
     $pattern->update_pattern($c);
 }
@@ -978,13 +1084,13 @@ sub rotate_start
     my $canvas  = $pattern->canvas;
 
     my $c;
-    foreach my $t ( $canvas->gettags('current') )
+    foreach my $t ( $pattern->gettags('current') )
     {
         $c = unpack( 'x4a*', $t ) if $t =~ /^card\d+$/;
     }
     return unless defined $c;
 
-    $pattern->start( $c, ( $pattern->start($c) + $dir ) % 4 );
+    $pattern->pattern->start( $c, ( $pattern->pattern->start($c) + $dir ) % 4 );
     $pattern->set_current_card($c);
     $pattern->update_pattern($c);
 }
@@ -1000,7 +1106,8 @@ sub palette_dlog
             -text    => 'Close',
             -command => [ withdraw => $palette ],
         )->pack(qw/-side bottom/);
-        my $h = $self->_palette(
+        my $h =
+          $self->_palette(
             $palette->Frame->pack(qw/-side top -fill both -expand y/) );
 
         $self->{_palette_dlog} = { dlog => $palette, h => $h };
@@ -1010,7 +1117,7 @@ sub palette_dlog
 
 sub _palette    # (frame, card_canvas, \current_hole, \threading, update)
 
-    # frame only required
+  # frame only required
 {
     my $self         = shift;
     my $palette      = shift;
@@ -1163,9 +1270,10 @@ sub threading_dlog
         )->pack(qw/-side bottom/);
         my $f1 = $t->Frame->pack(qw/-side left/);
         $f1->Label( -textvariable => \$self->{_current_card} )
-            ->pack(qw/-side top/);
-        my $f2 = $t->Frame( -label => "Palette", )
-            ->pack(qw/-side right -expand y -fill both/);
+          ->pack(qw/-side top/);
+        my $f2 =
+          $t->Frame( -label => "Palette", )
+          ->pack(qw/-side right -expand y -fill both/);
         my $card_canvas = $self->_card_canvas( $f1, \$t_info->{current_hole},
             \$t_info->{start}, 1, )->pack(qw/-side top/);
 
@@ -1278,29 +1386,28 @@ sub insert_row_dlog
         $d->Button(
             -text    => 'Done',
             -command => sub {
-                my $after_row
-                    = $d_info->{where} eq 'bottom'  ? 0
-                    : $d_info->{where} eq 'current' ? $d_info->{where_row}
-                    :                                 $self->number_of_rows;
+                my $after_row =
+                    $d_info->{where} eq 'bottom'  ? 0
+                  : $d_info->{where} eq 'current' ? $d_info->{where_row}
+                  :                                 $self->pattern->number_of_rows;
                 if ( $d_info->{where} eq 'current'
-                    and
-                    ( $after_row < 0 or $after_row > $self->number_of_rows ) )
+                    and ( $after_row < 0 or $after_row > $self->pattern->number_of_rows )
+                  )
                 {
                     $d->Dialog( -text =>
-                            'After must be between 0 and the number of turns'
-                    )->Show;
+                          'After must be between 0 and the number of turns' )
+                      ->Show;
                     return;
                 }
                 my @turns = split( //, $d_info->{turns} );
                 if ( grep !/^[\/\\|]$/, @turns )
                 {
-                    $d->Dialog( -text => 'Turns may only be /, | or \\' )
-                        ->Show;
+                    $d->Dialog( -text => 'Turns may only be /, | or \\' )->Show;
                     return;
                 }
                 print "insert_row(", $after_row, ", '",
-                    $d_info->{turns} || '', "')\n";
-                $self->insert_row( $after_row, $d_info->{turns} || '' );
+                  $d_info->{turns} || '', "')\n";
+                $self->pattern->insert_pick( [$after_row-1, $d_info->{turns} || ''] );
                 $self->draw_pattern;
                 $d->withdraw;
             },
@@ -1308,29 +1415,28 @@ sub insert_row_dlog
         $d->Button(
             -text    => 'Stay',
             -command => sub {
-                my $after_row
-                    = $d_info->{where} eq 'bottom'  ? 0
-                    : $d_info->{where} eq 'current' ? $d_info->{where_row}
-                    :                                 $self->number_of_rows;
+                my $after_row =
+                    $d_info->{where} eq 'bottom'  ? 0
+                  : $d_info->{where} eq 'current' ? $d_info->{where_row}
+                  :                                 $self->pattern->number_of_rows;
                 if ( $d_info->{where} eq 'current'
-                    and
-                    ( $after_row < 0 or $after_row > $self->number_of_rows ) )
+                    and ( $after_row < 0 or $after_row > $self->pattern->number_of_rows )
+                  )
                 {
                     $d->Dialog( -text =>
-                            'After must be between 0 and the number of turns'
-                    )->Show;
+                          'After must be between 0 and the number of turns' )
+                      ->Show;
                     return;
                 }
                 my @turns = split( //, $d_info->{turns} );
                 if ( grep !/^[\/\\|]$/, @turns )
                 {
-                    $d->Dialog( -text => 'Turns may only be /, | or \\' )
-                        ->Show;
+                    $d->Dialog( -text => 'Turns may only be /, | or \\' )->Show;
                     return;
                 }
                 print "insert_row(", $after_row, ", '",
-                    $d_info->{turns} || '', "')\n";
-                $self->insert_row( $after_row, $d_info->{turns} || '' );
+                  $d_info->{turns} || '', "')\n";
+                $self->pattern->insert_pick( [$after_row-1, $d_info->{turns} || ''] );
                 $self->draw_pattern;
             },
         )->pack(qw/-side left/);
@@ -1370,8 +1476,8 @@ sub float_length_dlog
     $self->{_float_length_dlog}->{float_length} = $old_float_length;
     my $action = $self->{_float_length_dlog}->{dlog}->Show;
     return $action eq 'OK'
-        ? $self->{_float_length_dlog}->{float_length}
-        : $old_float_length;
+      ? $self->{_float_length_dlog}->{float_length}
+      : $old_float_length;
 }
 
 sub delete_row_dlog
@@ -1410,25 +1516,24 @@ sub delete_row_dlog
         $d->Button(
             -text    => 'OK',
             -command => sub {
-                my $after_row
-                    = $d_info->{where} eq 'bottom'  ? 1
-                    : $d_info->{where} eq 'current' ? $d_info->{where_row}
-                    :                                 $self->number_of_rows;
+                my $after_row =
+                    $d_info->{where} eq 'bottom'  ? 1
+                  : $d_info->{where} eq 'current' ? $d_info->{where_row}
+                  :                                 $self->pattern->number_of_rows;
                 if ( $d_info->{where} eq 'current'
-                    and
-                    ( $after_row < 0 or $after_row > $self->number_of_rows ) )
+                    and ( $after_row < 0 or $after_row > $self->pattern->number_of_rows )
+                  )
                 {
                     $d->Dialog( -text =>
-                            'Row must be between 1 and the number of turns' )
-                        ->Show;
+                          'Row must be between 1 and the number of turns' )
+                      ->Show;
                     return;
                 }
                 print "delete_row($after_row-1)\n";
-                $self->canvas->delete(
-                    "row" . ( $self->number_of_rows - 1 ) );
-                $self->delete_row( $after_row - 1 );
-                $self->current_row( $self->number_of_rows - 1 )
-                    if $self->current_row >= $self->number_of_rows;
+                $self->canvas->delete( "row" . ( $self->pattern->number_of_rows - 1 ) );
+                $self->pattern->delete_row( $after_row - 1 );
+                $self->current_row( $self->pattern->number_of_rows - 1 )
+                  if $self->current_row >= $self->pattern->number_of_rows;
                 $self->draw_pattern;
                 $d->withdraw;
             },
@@ -1510,30 +1615,29 @@ sub duplicate_row_dlog
         $f_bottom->Button(
             -text    => 'Done',
             -command => sub {
-                my $from_row
-                    = $d_info->{from} eq 'bottom'  ? 1
-                    : $d_info->{from} eq 'current' ? $d_info->{from_row}
-                    :                                $self->number_of_rows;
+                my $from_row =
+                    $d_info->{from} eq 'bottom'  ? 1
+                  : $d_info->{from} eq 'current' ? $d_info->{from_row}
+                  :                                $self->pattern->number_of_rows;
                 if ( $d_info->{from} eq 'current'
-                    and ( $from_row < 0 or $from_row > $self->number_of_rows )
-                    )
+                    and ( $from_row < 0 or $from_row > $self->pattern->number_of_rows ) )
                 {
                     $d->Dialog( -text =>
-                            '"From" row must be between 1 and the number of turns'
+                          '"From" row must be between 1 and the number of turns'
                     )->Show;
                     return;
                 }
-                my $after_row
-                    = $d_info->{after} eq 'bottom'  ? 0
-                    : $d_info->{after} eq 'current' ? $d_info->{after_row}
-                    :                                 $self->number_of_rows;
+                my $after_row =
+                    $d_info->{after} eq 'bottom'  ? 0
+                  : $d_info->{after} eq 'current' ? $d_info->{after_row}
+                  :                                 $self->pattern->number_of_rows;
                 if ( $d_info->{after} eq 'current'
-                    and
-                    ( $after_row < 0 or $after_row > $self->number_of_rows ) )
+                    and ( $after_row < 0 or $after_row > $self->pattern->number_of_rows )
+                  )
                 {
                     $d->Dialog( -text =>
-                            '"To" row must be between 0 and the number of turns'
-                    )->Show;
+                          '"To" row must be between 0 and the number of turns' )
+                      ->Show;
                     return;
                 }
                 print "duplicate_row($from_row-1, $after_row)\n";
@@ -1545,30 +1649,29 @@ sub duplicate_row_dlog
         $f_bottom->Button(
             -text    => 'Stay',
             -command => sub {
-                my $from_row
-                    = $d_info->{from} eq 'bottom'  ? 1
-                    : $d_info->{from} eq 'current' ? $d_info->{from_row}
-                    :                                $self->number_of_rows;
+                my $from_row =
+                    $d_info->{from} eq 'bottom'  ? 1
+                  : $d_info->{from} eq 'current' ? $d_info->{from_row}
+                  :                                $self->pattern->number_of_rows;
                 if ( $d_info->{from} eq 'current'
-                    and ( $from_row < 0 or $from_row > $self->number_of_rows )
-                    )
+                    and ( $from_row < 0 or $from_row > $self->pattern->number_of_rows ) )
                 {
                     $d->Dialog( -text =>
-                            '"From" row must be between 1 and the number of turns'
+                          '"From" row must be between 1 and the number of turns'
                     )->Show;
                     return;
                 }
-                my $after_row
-                    = $d_info->{after} eq 'bottom'  ? 0
-                    : $d_info->{after} eq 'current' ? $d_info->{after_row}
-                    :                                 $self->number_of_rows;
+                my $after_row =
+                    $d_info->{after} eq 'bottom'  ? 0
+                  : $d_info->{after} eq 'current' ? $d_info->{after_row}
+                  :                                 $self->pattern->number_of_rows;
                 if ( $d_info->{after} eq 'current'
-                    and
-                    ( $after_row < 0 or $after_row > $self->number_of_rows ) )
+                    and ( $after_row < 0 or $after_row > $self->pattern->number_of_rows )
+                  )
                 {
                     $d->Dialog( -text =>
-                            '"To" row must be between 0 and the number of turns'
-                    )->Show;
+                          '"To" row must be between 0 and the number of turns' )
+                      ->Show;
                     return;
                 }
                 print "duplicate_row($from_row-1, $after_row)\n";
@@ -1642,17 +1745,18 @@ sub insert_card_dlog
         $f3->Button(
             -text    => 'Insert and Close',
             -command => sub {
-                my $after_card
-                    = $d_info->{where} eq 'bottom'  ? 0
-                    : $d_info->{where} eq 'current' ? $d_info->{where_card}
-                    :                                 $self->number_of_cards;
-                if ($d_info->{where} eq 'current'
+                my $after_card =
+                    $d_info->{where} eq 'bottom'  ? 0
+                  : $d_info->{where} eq 'current' ? $d_info->{where_card}
+                  :                                 $self->number_of_cards;
+                if (
+                    $d_info->{where} eq 'current'
                     and (  $after_card < 0
                         or $after_card > $self->number_of_cards )
-                    )
+                  )
                 {
                     $d->Dialog( -text =>
-                            '"To" card must be between 0 and the number of turns'
+                          '"To" card must be between 0 and the number of turns'
                     )->Show;
                     return;
                 }
@@ -1662,6 +1766,7 @@ sub insert_card_dlog
                 print "unreversed turns is :$turns:\n";
 
                 # any other data checks, like turns...
+                # FIXME 
                 $self->insert_card( $after_card,
                     join( "", reverse split( //, $turns ) ) );
                 $self->SZ( $after_card, $d_info->{SZ} );
@@ -1674,17 +1779,18 @@ sub insert_card_dlog
         $f3->Button(
             -text    => 'Insert and Stay',
             -command => sub {
-                my $after_card
-                    = $d_info->{where} eq 'bottom'  ? 0
-                    : $d_info->{where} eq 'current' ? $d_info->{where_card}
-                    :                                 $self->number_of_cards;
-                if ($d_info->{where} eq 'current'
+                my $after_card =
+                    $d_info->{where} eq 'bottom'  ? 0
+                  : $d_info->{where} eq 'current' ? $d_info->{where_card}
+                  :                                 $self->number_of_cards;
+                if (
+                    $d_info->{where} eq 'current'
                     and (  $after_card < 0
                         or $after_card > $self->number_of_cards )
-                    )
+                  )
                 {
                     $d->Dialog( -text =>
-                            '"To" card must be between 0 and the number of turns'
+                          '"To" card must be between 0 and the number of turns'
                     )->Show;
                     return;
                 }
@@ -1694,6 +1800,7 @@ sub insert_card_dlog
                 print "unreversed turns is :$turns:\n";
 
                 # any other data checks, like turns...
+                # FIXME
                 $self->insert_card( $after_card,
                     join( "", reverse split( //, $turns ) ) );
                 $self->SZ( $after_card, $d_info->{SZ} );
@@ -1708,8 +1815,9 @@ sub insert_card_dlog
                 $d->withdraw;
             },
         )->pack(qw/-side right/);
-        my $f1r = $d->Frame( -label => 'Turns' )
-            ->pack(qw/-side right -fill y -expand y/);
+        my $f1r =
+          $d->Frame( -label => 'Turns' )
+          ->pack(qw/-side right -fill y -expand y/);
         my $turns = $f1r->Scrolled(
             'Text',
             -scrollbars => 'e',
@@ -1720,12 +1828,9 @@ sub insert_card_dlog
         $turns->delete( '1.0', 'end' );
         $turns->insert( '1.0',
             join( "", reverse $self->card_turns( $self->current_card ) ) );
-        my $f1l
-            = $d->Frame( -borderwidth => 1 )->pack(qw/-side top -anchor w/);
-        my $f2l
-            = $d->Frame( -borderwidth => 1 )->pack(qw/-side top -anchor w/);
-        my $f3l
-            = $d->Frame( -borderwidth => 1 )->pack(qw/-side top -anchor w/);
+        my $f1l = $d->Frame( -borderwidth => 1 )->pack(qw/-side top -anchor w/);
+        my $f2l = $d->Frame( -borderwidth => 1 )->pack(qw/-side top -anchor w/);
+        my $f3l = $d->Frame( -borderwidth => 1 )->pack(qw/-side top -anchor w/);
         my $f4l = $d->Frame->pack(qw/-side top -anchor w/);
 
         # where to insert - in f1r
@@ -1909,11 +2014,11 @@ sub _card_canvas    # (window, \current_hole, \start_hole, update_pattern?)
         -anchor => 'center',
     );
     my $start_sub = $update
-        ? sub {
+      ? sub {
         $self->start( $self->current_card, $$start );
         $self->update_pattern( $self->current_card );
-        }
-        : sub { };
+      }
+      : sub { };
 
     foreach my $coords ( [ 0, 80, 80 ], [ 1, 120, 80 ], [ 2, 120, 120 ],
         [ 3, 80, 120 ] )
@@ -1970,18 +2075,19 @@ sub delete_card_dlog
         $d->Button(
             -text    => 'OK',
             -command => sub {
-                my $after_card
-                    = $d_info->{where} eq 'bottom'  ? 1
-                    : $d_info->{where} eq 'current' ? $d_info->{where_card}
-                    :                                 $self->number_of_cards;
-                if ($d_info->{where} eq 'current'
+                my $after_card =
+                    $d_info->{where} eq 'bottom'  ? 1
+                  : $d_info->{where} eq 'current' ? $d_info->{where_card}
+                  :                                 $self->number_of_cards;
+                if (
+                    $d_info->{where} eq 'current'
                     and (  $after_card < 0
                         or $after_card > $self->number_of_cards )
-                    )
+                  )
                 {
                     $d->Dialog( -text =>
-                            'card must be between 1 and the number of turns' )
-                        ->Show;
+                          'card must be between 1 and the number of turns' )
+                      ->Show;
                     return;
                 }
                 print "delete_card($after_card-1)\n";
@@ -1989,7 +2095,7 @@ sub delete_card_dlog
                     "card" . ( $self->number_of_cards - 1 ) );
                 $self->delete_card( $after_card - 1 );
                 $self->current_card( $self->number_of_cards - 1 )
-                    if $self->current_card >= $self->number_of_cards;
+                  if $self->current_card >= $self->number_of_cards;
                 $self->draw_pattern;
                 $d->withdraw;
             },
@@ -2071,31 +2177,31 @@ sub duplicate_card_dlog
         $f_bottom->Button(
             -text    => 'Done',
             -command => sub {
-                my $from_card
-                    = $d_info->{from} eq 'bottom'  ? 1
-                    : $d_info->{from} eq 'current' ? $d_info->{from_card}
-                    :                                $self->number_of_cards;
+                my $from_card =
+                    $d_info->{from} eq 'bottom'  ? 1
+                  : $d_info->{from} eq 'current' ? $d_info->{from_card}
+                  :                                $self->number_of_cards;
                 if ( $d_info->{from} eq 'current'
                     and
-                    ( $from_card < 0 or $from_card > $self->number_of_cards )
-                    )
+                    ( $from_card < 0 or $from_card > $self->number_of_cards ) )
                 {
                     $d->Dialog( -text =>
-                            '"From" card must be between 1 and the number of turns'
+'"From" card must be between 1 and the number of turns'
                     )->Show;
                     return;
                 }
-                my $after_card
-                    = $d_info->{after} eq 'bottom'  ? 0
-                    : $d_info->{after} eq 'current' ? $d_info->{after_card}
-                    :                                 $self->number_of_cards;
-                if ($d_info->{after} eq 'current'
+                my $after_card =
+                    $d_info->{after} eq 'bottom'  ? 0
+                  : $d_info->{after} eq 'current' ? $d_info->{after_card}
+                  :                                 $self->number_of_cards;
+                if (
+                    $d_info->{after} eq 'current'
                     and (  $after_card < 0
                         or $after_card > $self->number_of_cards )
-                    )
+                  )
                 {
                     $d->Dialog( -text =>
-                            '"To" card must be between 0 and the number of turns'
+                          '"To" card must be between 0 and the number of turns'
                     )->Show;
                     return;
                 }
@@ -2108,31 +2214,31 @@ sub duplicate_card_dlog
         $f_bottom->Button(
             -text    => 'Stay',
             -command => sub {
-                my $from_card
-                    = $d_info->{from} eq 'bottom'  ? 1
-                    : $d_info->{from} eq 'current' ? $d_info->{from_card}
-                    :                                $self->number_of_cards;
+                my $from_card =
+                    $d_info->{from} eq 'bottom'  ? 1
+                  : $d_info->{from} eq 'current' ? $d_info->{from_card}
+                  :                                $self->number_of_cards;
                 if ( $d_info->{from} eq 'current'
                     and
-                    ( $from_card < 0 or $from_card > $self->number_of_cards )
-                    )
+                    ( $from_card < 0 or $from_card > $self->number_of_cards ) )
                 {
                     $d->Dialog( -text =>
-                            '"From" card must be between 1 and the number of turns'
+'"From" card must be between 1 and the number of turns'
                     )->Show;
                     return;
                 }
-                my $after_card
-                    = $d_info->{after} eq 'bottom'  ? 0
-                    : $d_info->{after} eq 'current' ? $d_info->{after_card}
-                    :                                 $self->number_of_cards;
-                if ($d_info->{after} eq 'current'
+                my $after_card =
+                    $d_info->{after} eq 'bottom'  ? 0
+                  : $d_info->{after} eq 'current' ? $d_info->{after_card}
+                  :                                 $self->number_of_cards;
+                if (
+                    $d_info->{after} eq 'current'
                     and (  $after_card < 0
                         or $after_card > $self->number_of_cards )
-                    )
+                  )
                 {
                     $d->Dialog( -text =>
-                            '"To" card must be between 0 and the number of turns'
+                          '"To" card must be between 0 and the number of turns'
                     )->Show;
                     return;
                 }

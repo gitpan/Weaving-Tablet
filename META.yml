@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Weaving-Tablet
-version:            0.8.5
+version:            0.9.1
 abstract:           Perl extension for manipulating tablet weaving patterns
 author:
     - Michael Houghton <herveus@cpan.org>
@@ -12,6 +12,7 @@ build_requires:
     ExtUtils::MakeMaker:  0
 requires:
     Data::Dumper:     0
+    Moose:            0
     Test::More:       0
     Tk:               0
     Tk::ColorEditor:  0
@@ -23,7 +24,7 @@ no_index:
     directory:
         - t
         - inc
-generated_by:       ExtUtils::MakeMaker version 6.50
+generated_by:       ExtUtils::MakeMaker version 6.56
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4

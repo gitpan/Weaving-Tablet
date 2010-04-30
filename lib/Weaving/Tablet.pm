@@ -3,9 +3,11 @@ package Weaving::Tablet;
 use warnings;
 use strict;
 use Carp;
+use Moose;
+use Weaving::Tablet::Card;
 
 our $VERSION;
-use version; $VERSION = qv('0.8.5');
+use version; $VERSION = qv('0.9.1');
 
 # Other recommended modules (uncomment to use):
 #  use IO::Prompt;
@@ -13,7 +15,26 @@ use version; $VERSION = qv('0.8.5');
 #  use Perl6::Slurp;
 #  use Perl6::Say;
 
+has 'pattern_length' => (isa => 'Int', is => 'ro', default => 10);
+has 'number_of_holes' => (isa => 'Int', is => 'ro', default => 4, writer => '_set_number_of_holes');
+has 'number_of_cards' => (isa => 'Int', is => 'rw', default => 20);
+has 'cards' => (isa  => 'ArrayRef[Weaving::Tablet::Card]', is => 'ro', default => sub { [] });
+has 'color_table' => (isa => 'ArrayRef[Str]', is => 'ro', default => sub { [qw/red green blue black yellow white/] });
+has 'file_name' => (isa => 'Str', is => 'rw');
+has 'dirty' => (isa => 'Bool', is => 'rw', default => 0);
 
+sub BUILD
+{
+    my $self = shift;
+    if (defined $self->file_name)
+    {
+        $self->load_pattern;
+        return;
+    }
+	push @{$self->cards}, Weaving::Tablet::Card->new(number_of_turns => 
+	$self->pattern_length) for 1..$self->number_of_cards;
+}
+=pod
 sub new
 {
 	my $this = shift;
@@ -93,51 +114,62 @@ sub initialize
 	$self;
 }
 
+=cut
+
 sub load_pattern
 {
 	my $self = shift;
 	
-	return 0 unless defined $self->{file_name};
-	return 0 unless -r $self->{file_name};
-	open PATTERN, $self->{file_name} or return 0;
-	my ($cards, $rows, $holes) = (split(/ /,<PATTERN>))[0,2,4];
+	return 0 unless defined $self->file_name;
+	return 0 unless -r $self->file_name;
+	open my $pattern, '<', $self->file_name or croak "Can't open ".$self->file_name.": $!";
+	my ($cards, $rows, $holes) = (split(/ /,<$pattern>))[0,2,4];
 	$holes ||= 4;
-	$self->initialize(number_of_cards => $cards,
-		number_of_holes => $holes,
-		file_name => $self->{file_name},
-	);
+	$self->number_of_cards($cards);
+	$self->_set_number_of_holes($holes);
+	
+	# prime cards with empty cards
+	push @{$self->cards}, Weaving::Tablet::Card->new(number_of_turns => 0) for 1..$self->number_of_cards;
 	
 	my $card;
-	
-	while (<PATTERN>)
+	while (<$pattern>)
 	{
 		chomp;
 		last unless /^[\\\/|]/;
-		$self->insert_row(0, $_)
+		$self->insert_pick([-1, $_]);
 	}
 	
 	# now $_ contains the start line...
 	tr /ABCDEFGH/01234567/;
-	$self->start([split(//, $_)]);
+	my @starts = split(//, $_);
+	for my $card (0 .. $self->number_of_cards-1)
+	{
+	    $self->cards->[$card]->start($starts[$card]);
+	}
 	
-	$_ = <PATTERN>;
+	$_ = <$pattern>;
 	chomp;
-	$self->SZ([split(//, $_)]);
-	
-	for ($card = 0; $card < $cards; $card++)
+	my @SZ = split(//, $_);
+	for my $card (0 .. $self->number_of_cards-1)
 	{
-		$_ = <PATTERN>;
-		chomp;
-		$self->threading($card, [split(/,/, $_)]);
+	    $self->cards->[$card]->SZ($SZ[$card]);
 	}
 	
-	while (<PATTERN>)
+	for my $card (0 .. $self->number_of_cards-1)
 	{
+		$_ = <$pattern>;
 		chomp;
-		push @{$self->{color_table}}, $_;# use X color names here 
+		$self->cards->[$card]->set_threading([split(/,/, $_)]);
 	}
 	
-	close PATTERN;
+	pop @{$self->color_table} while @{$self->color_table};
+	while (<$pattern>)
+	{
+		chomp;
+		push @{$self->color_table}, $_;# use X color names here 
+	}
+	
+	close $pattern;
 	
 	$self->color_pattern;
 	$self->twist_pattern;
@@ -148,8 +180,6 @@ sub load_pattern
 sub save_pattern
 {
 	my $self = shift;
-	
-	my ($row, $card);
 	
 	my $file = $self->{file_name};
 	
@@ -165,6 +195,7 @@ sub save_pattern
 	$self->dirty(0);
 	1;
 }
+
 sub dump_pattern
 {
 	my $self = shift;
@@ -174,26 +205,22 @@ sub dump_pattern
 	
 	$pattern = join(" ",$self->number_of_cards, 'cards', $self->number_of_rows, 'rows', $self->number_of_holes, 'holes')."\n";
 	
-	for ($row = $self->{number_of_rows}-1; $row >= 0; $row--)
+	for my $row (reverse 0 .. $self->number_of_rows-1)
 	{
-		for ($card = 0; $card < $self->{number_of_cards}; $card++)
-		{
-			$pattern .=  $self->{turns}[$card][$row];
-		}
-		$pattern .=  "\n";
+	    $pattern .= join('', $self->row_turns($row), "\n");
 	}
 	
-	(my $start = join("",@{$self->{start}})) =~ tr/01234567/ABCDEFGH/;
+	(my $start = join("",@{$self->start})) =~ tr/01234567/ABCDEFGH/;
 	$pattern .= $start."\n";
 	
-	$pattern .= join("",@{$self->{SZ}})."\n";
+	$pattern .= join("",@{$self->SZ})."\n";
 	
-	for ($card = 0; $card < $self->{number_of_cards}; $card++)
+	for my $card (0 .. $self->number_of_cards-1)
 	{
-		$pattern .=  join(",",@{$self->{threading}[$card]})."\n";
+		$pattern .=  join(",",@{$self->threading($card)})."\n";
 	}
 	
-	foreach (@{$self->{color_table}})
+	foreach (@{$self->color_table})
 	{
 		$pattern .=  $_."\n";
 	}
@@ -203,80 +230,30 @@ sub dump_pattern
 sub color_pattern
 {
 	my $self = shift;
-	my @cardlist = @_;
-	@cardlist or @cardlist = (0..$self->number_of_cards-1);
-		
-	foreach my $card (@cardlist)
+	my @cardlist = @_ == 0 ? (0 .. $self->number_of_cards-1) : @_;
+	for my $card (@cardlist)
 	{
-		my $startrow = 0;
-		($card, $startrow) = @$card if ref($card);
-		my $color = $self->{start}[$card];
-		my $pos = $color;
-		my $SZ = $self->SZ($card) eq 'S' ? 1 : -1;
-		
-		foreach my $row (0..$self->number_of_rows-1)
-		{
-			my $this_turn = $self->{turns}[$card][$row];
-			unless ($this_turn eq '|')
-			{
-				$color = $this_turn eq '/' ? $pos : $pos+1;
-				$color %= $self->number_of_holes;
-				$pos += $this_turn eq '/' ? -1 : +1;
-				$pos %= $self->number_of_holes;
-			}
-			$self->{color}[$card][$row] = $color;
-		}
+	    $self->cards->[$card]->color_card;
 	}
 }
 
 sub twist_pattern
 {
 	my $self = shift;
-	my @cardlist = @_;
-	@cardlist or @cardlist = (0..$self->{number_of_cards}-1);
-		
-	foreach my $card (@cardlist)
+	my @cardlist = @_ == 0 ? (0 .. $self->number_of_cards-1) : @_;
+	for my $card (@cardlist)
 	{
-		my $startrow = 0;
-		($card, $startrow) = @$card if ref($card);
-		my $twist = 0;
-		my $SZ = $self->SZ($card) eq 'S' ? 1 : -1;
-		
-		foreach my $row (0..$self->{number_of_rows}-1)
-		{
-			$twist++ if $self->{turns}[$card][$row] eq '/';
-			$twist-- if $self->{turns}[$card][$row] eq '\\';
-			
-			$self->{twist}[$card][$row] = $SZ * $twist;
-		}
+	    $self->cards->[$card]->twist_card;
 	}
 }
 
 sub float_pattern
 {
 	my $self = shift;
-	my @cardlist = @_;
-	@cardlist or @cardlist = (0..$self->{number_of_cards}-1);
-	$self->color_pattern(@cardlist);
-	
-	foreach my $card (@cardlist)
+	my @cardlist = @_ == 0 ? (0 .. $self->number_of_cards-1) : @_;
+	for my $card (@cardlist)
 	{
-		next unless $self->{floats}[$card];
-		my $startrow = 0;
-		#print @{$self->{color}[$card]}, "\n";
-		($card, $startrow) = @$card if ref($card);
-		my $top = $self->{color}[$card][0];
-		my $f_start = 0;
-		$self->{floats}->[$card] = ();
-		foreach my $row (1..$self->{number_of_rows}-1)
-		{
-			next if $self->{color}[$card][$row] == $top;
-			push @{$self->{floats}->[$card]}, [$f_start, $row-1];
-			$top = $self->{color}[$card][$row];
-			$f_start = $row;
-		}
-		push @{$self->{floats}->[$card]}, [$f_start, $self->{number_of_rows}-1];
-		#print map("$_->[0]-$_->[1],", @{$self->{floats}->[$card]}), "\n";
+	    $self->cards->[$card]->float_card;
 	}
 }
 
@@ -312,24 +289,20 @@ sub print_twist
 	}
 }
 
-sub insert_row
+sub insert_pick
 {
 	my $self = shift;
-	INSERT: while (1)
+	push @_, [$self->number_of_rows-1, '/'x$self->number_of_cards] if @_ == 0; 
+	while (@_)
 	{
-		my $row = shift; $row = $self->{number_of_rows}-1 unless defined $row;
-		my $turns = shift || '/' x $self->{number_of_cards};
-		$turns = pack("A$self->{number_of_cards}", $turns.'/' x $self->{number_of_cards});
-		
-		my @turns = split(//, $turns);
-		$self->{number_of_rows}++;
-		
-		foreach my $card (0..$self->{number_of_cards}-1)
-		{
-			splice @{$self->{turns}[$card]}, $row, 0, $turns[$card];
-		}
-		
-		last INSERT unless @_;
+	    my $rowspec = shift;
+	    my ($after, $turns) = @$rowspec;
+	    $turns = pack('A'.$self->number_of_cards, $turns.'/' x $self->number_of_cards);
+	    my @turns = split(//, $turns);
+	    for my $card (0 .. $self->number_of_cards-1)
+	    {
+	        $self->cards->[$card]->insert_picks($after, $turns[$card]);
+	    }
 	}
 	$self->dirty(1);
 }
@@ -337,21 +310,13 @@ sub insert_row
 sub insert_card
 {
 	my $self = shift;
-	INSERT: while (1)
+	while (@_)
 	{
-		my $card = shift; $card = $self->{number_of_cards}-1 unless defined $card;
-		my $turns = shift || '/' x $self->{number_of_rows};
-		$turns = pack("A$self->{number_of_rows}", $turns.'/' x $self->{number_of_rows});
-		
-		my @turns = split(//, $turns);
-		$self->{number_of_cards}++;
-		
-		splice @{$self->{turns}}, $card, 0, [@turns];
-		splice @{$self->{SZ}}, $card, 0, 'S';
-		splice @{$self->{start}}, $card, 0, 0;
-		splice @{$self->{threading}}, $card, 0, [0..$self->number_of_holes-1];
-		
-		last INSERT unless @_;
+	    my $rowspec = shift;
+	    my ($after, $turns) = @$rowspec;
+		$turns = pack('A'.$self->{number_of_rows}, $turns.'/' x $self->{number_of_rows});
+	    my $card = Weaving::Tablet::Card->new(turns => $turns);
+	    splice @{$self->cards}, $after+1, 0, $card;
 	}
 	$self->dirty(1);
 }
@@ -359,14 +324,10 @@ sub insert_card
 sub delete_row
 {
 	my $self = shift;
-	foreach my $row (reverse sort @_)
+	my @rows = reverse sort { $a <=> $b } @_;
+	foreach my $card (0..$self->{number_of_cards}-1)
 	{
-		$self->{number_of_rows}--;
-		
-		foreach my $card (0..$self->{number_of_cards}-1)
-		{
-			splice @{$self->{turns}[$card]}, $row, 1;
-		}
+		$self->cards->[$card]->delete_picks(@rows);
 	}
 	$self->dirty(1);
 }
@@ -426,19 +387,9 @@ sub duplicate_card
 	$self->dirty(1);
 }
 
-sub number_of_cards
-{
-	shift->{number_of_cards};
-}
-
 sub number_of_rows
 {
-	shift->{number_of_rows};
-}
-
-sub number_of_holes
-{
-	shift->{number_of_holes};
+	shift->cards->[0]->{number_of_turns};
 }
 
 sub SZ
@@ -453,7 +404,7 @@ sub SZ
 		return unless $value =~ /[SZ]/;
 		return if $card < 0;
 		return if $card >= $self->number_of_cards;
-		$self->{SZ}[$card] = $value;
+		$self->cards->[$card]->SZ($value);
 		$self->dirty(1);
 		return;
 	}
@@ -464,6 +415,7 @@ sub SZ
 			warn "attempt to use invalid SZ value for card $card";
 			return;
 		}
+		croak;
 		my @values = @$card;
 		pop @values while @values > $self->number_of_cards;
 		splice @{$self->{SZ}}, 0, @values, @values;
@@ -474,11 +426,16 @@ sub SZ
 	{
 		return undef if $card < 0;
 		return undef if $card >= $self->number_of_cards;
-		return $self->{SZ}[$card];
+		return $self->cards->[$card]->SZ;
 	}
 	elsif (not defined $card)
 	{
-		return (@{$self->{SZ}});
+	    my @SZ;
+	    for my $card (0 .. $self->number_of_cards-1)
+	    {
+	        push @SZ, $self->cards->[$card]->SZ;
+	    }
+		return \@SZ;
 	}
 	else 
 	{
@@ -498,7 +455,7 @@ sub start
 		return unless $value =~ /[01234567]/;
 		return if $card < 0;
 		return if $card >= $self->number_of_cards;
-		$self->{start}[$card] = $value;
+		$self->cards->[$card]->start($value);
 		$self->dirty(1);
 		return;
 	}
@@ -509,9 +466,10 @@ sub start
 			warn "attempt to use invalid start value for card $card";
 			return;
 		}
-		my @values = @$card;
-		pop @values while @values > $self->number_of_cards;
-		splice @{$self->{start}}, 0, @values, @values;
+		for my $c (0 .. $self->number_of_cards-1)
+		{
+		    $self->start($c, $card->[$c]);
+		}
 		$self->dirty(1);
 		return;
 	}
@@ -519,11 +477,16 @@ sub start
 	{
 		return undef if $card < 0;
 		return undef if $card >= $self->number_of_cards;
-		return $self->{start}[$card];
+		return $self->cards->[$card]->start;
 	}
 	elsif (not defined $card)
 	{
-		return (@{$self->{start}});
+	    my @start;
+	    for my $card (0 .. $self->number_of_cards-1)
+	    {
+	        push @start, $self->cards->[$card]->start;
+	    }
+		return \@start;
 	}
 	else 
 	{
@@ -536,13 +499,15 @@ sub threading
 	my $self = shift;
 	my ($card, $hole, $value) = @_;
 	
-	return @{$self->{threading}} unless @_;
-	
-	if (@_ == 1)
+	if (@_ == 0)
+	{
+	    return [map { $self->cards->[$_]->threading } (0 .. $self->number_of_cards)];
+	}
+	elsif (@_ == 1)
 	{
 		return undef if $card < 0;
 		return undef if $card >= $self->number_of_cards;
-		return (@{$self->{threading}[$card]});
+		return $self->cards->[$card]->threading;
 	}
 	elsif (@_ == 2) # (card, hole) or (card, listref_of_color_indices)
 	{
@@ -552,16 +517,15 @@ sub threading
 			return undef if $card >= $self->number_of_cards;
 			return undef if $hole < 0;
 			return undef if $hole >= $self->number_of_holes;
-			return ($self->{threading}[$card][$hole]);
+			return ($self->cards->[$card]->threading->[$hole]);
 		}
 		elsif (ref($hole) eq 'ARRAY')
 		{
 			return undef if $card < 0;
 			return undef if $card >= $self->number_of_cards;
 			return undef if grep /\D/, @$hole;
-			my @values = @$hole;
-			pop @values while @values > $self->number_of_holes;
-			splice @{$self->{threading}[$card]}, 0, @values, @values;
+			return undef if @$hole != $self->number_of_holes;
+			$self->card->[$card]->set_threading($hole);
 			$self->dirty(1);
 		}
 		else
@@ -576,7 +540,7 @@ sub threading
 		return undef if $hole < 0;
 		return undef if $hole >= $self->number_of_holes;
 		$self->dirty(1);
-		$self->{threading}[$card][$hole] = $value;
+		$self->cards->[$card]->threading->[$hole] = $value;
 	}
 }
 
@@ -593,7 +557,7 @@ sub turns
 		return undef if $row >= $self->number_of_rows;
 		return undef unless $turn =~ /^[\\\/|]$/;
 		$self->dirty(1);
-		$self->{turns}[$card][$row] = $turn;
+		$self->card_turns($card)->[$row] = $turn;
 	}
 	elsif (@_ == 2)
 	{
@@ -601,7 +565,7 @@ sub turns
 		return undef if $card >= $self->number_of_cards;
 		return undef if $row < 0;
 		return undef if $row >= $self->number_of_rows;
-		return $self->{turns}[$card][$row];
+		return $self->card_turns($card)->[$row];
 	}
 	else
 	{
@@ -621,7 +585,7 @@ sub row_turns
 		foreach my $c (0..$self->number_of_cards-1)
 		{
 			last if $c >= @$turns;
-			$self->{turns}[$c][$row] = $$turns[$c];
+			$self->card_turns($c)->[$row] = $$turns[$c];
 		}
 		$self->dirty(1);
 	}
@@ -632,7 +596,7 @@ sub row_turns
 		my @row;
 		foreach my $c (0..$self->number_of_cards-1)
 		{
-			push @row, $self->{turns}[$c][$row];
+			push @row, $self->card_turns($c)->[$row];
 		}
 		return @row;
 	}
@@ -654,33 +618,18 @@ sub card_turns
 		my @values = @$turns;
 		pop @values while @values > $self->number_of_rows;
 		$self->dirty(1);
-		splice @{$self->{turns}[$card]}, 0, @values, @values;
+		splice @{$self->cards->[$card]->turns}, 0, @values, @values;
 	}
 	elsif (@_ == 1)
 	{
 		return undef if $card < 0;
 		return undef if $card >= $self->number_of_cards;
-		return (@{$self->{turns}[$card]});
+		return $self->cards->[$card]->turns;
 	}
 	else
 	{
 		return undef;
 	}
-}
-
-sub color_table
-{
-	my $self = shift;
-	my ($index, $value) = @_;
-	defined($value) and not defined($index) and $index = @{$self->{color_table}};
-	
-	return (@{$self->{color_table}}) unless @_;
-	return undef unless defined $index;
-	return undef unless ($index >= 0 and $index <= @{$self->{color_table}});
-	return $self->{color_table}[$index] unless defined $value;
-	$self->{color_table}[$index] = $value unless ref($value);
-	$self->dirty(1);
-	splice @{$self->{color_table}}, 0, @$value, @$value if ref($value) eq 'ARRAY';
 }
 
 sub twist
@@ -691,7 +640,7 @@ sub twist
 	return @{$self->{twist}} unless @_;
 	return undef unless ($card >= 0 and $card < $self->number_of_cards);
 	return undef unless ($row >= 0 and $row < $self->number_of_rows);
-	return $self->{twist}[$card][$row];
+	return $self->card_twist->[$row];
 }
 
 sub row_twist
@@ -702,9 +651,9 @@ sub row_twist
 	return undef unless defined $row;
 	return undef unless ($row >= 0 and $row < $self->number_of_rows);
 	my @row;
-	foreach my $c (0..$self->number_of_cards-1)
+	foreach my $c (0 .. $self->number_of_cards-1)
 	{
-		push @row, $self->{twist}[$c][$row];
+		push @row, $self->card_twist($c)->[$row];
 	}
 	return @row;
 }
@@ -716,7 +665,7 @@ sub card_twist
 	
 	return undef unless defined $card;
 	return undef unless ($card >= 0 and $card < $self->number_of_cards);
-	return @{$self->{twist}[$card]};
+	return @{$self->cards->[$card]->twist};
 }
 
 sub color
@@ -727,7 +676,7 @@ sub color
 	return @{$self->{color}} unless @_;
 	return undef unless ($card >= 0 and $card < $self->number_of_cards);
 	return undef unless ($row >= 0 and $row < $self->number_of_rows);
-	return $self->{color}[$card][$row];
+	return $self->card_color($card)->[$row];
 }
 
 sub row_color
@@ -740,7 +689,7 @@ sub row_color
 	my @row;
 	foreach my $c (0..$self->number_of_cards-1)
 	{
-		push @row, $self->{color}[$c][$row];
+		push @row, $self->card_color($c)->[$row];
 	}
 	return @row;
 }
@@ -752,24 +701,8 @@ sub card_color
 	
 	return undef unless defined $card;
 	return undef unless ($card >= 0 and $card < $self->number_of_cards);
-	return @{$self->{color}[$card]};
+	return $self->cards->[$card]->color;
 }
-
-sub file_name
-{
-	my $self = shift;
-	@_ and $self->{file_name} = shift;
-	$self->{file_name};
-}
-
-sub dirty
-{
-	my $self = shift;
-	@_ and $self->{dirty} = shift;
-	$self->{dirty};
-}
-
-1;
 
 
 1; # Magic true value required at end of module
@@ -782,7 +715,7 @@ Weaving::Tablet - Perl extension for manipulating tablet weaving patterns
 
 =head1 VERSION
 
-This document describes Weaving::Tablet version 0.8.4
+This document describes Weaving::Tablet version 0.9.0
 
 
 =head1 SYNOPSIS
@@ -800,7 +733,7 @@ This document describes Weaving::Tablet version 0.8.4
   $pattern->print_twist(10); # print accumulated twist at row 10
   $pattern->print_twist(10,20,25); # print accumulated twist at rows 10,20,25
   
-  $pattern->insert_row; 
+  $pattern->insert_pick; 
   $pattern->insert_card; 
   $pattern->delete_row;
   $pattern->delete_card;
@@ -1057,25 +990,25 @@ Each inner list is a list of twist values for the selected row.
 For example: $pattern->print_twist(10,11) will return a list of two lists in
 a list context
 
-=item insert_row(after, turns...)
+=item insert_pick(rowspec...)
 
-Add a new row to the pattern. 
+Add picks to the pattern. Row numbers begin with 0.
 
-$pattern->insert_row() inserts a new row at the end, with all cards turning
+$pattern->insert_pick() inserts a new row at the end, with all cards turning
 forward.
 
-$pattern->insert_row(number) inserts a new row after row (number). Specify
+$pattern->insert_pick([]number]) inserts a new row after row (number). Specify
 -1 to insert new row at beginning. All cards will be turning forward.
 
-$pattern->insert_row(number, turns) inserts a new row with the turning 
+$pattern->insert_pick([]number, turns]) inserts a new row with the turning 
 specified. Turning is given as a string of /, \, and |. The turns is padded with
 / if too short; excess cards are ignored.
 
-insert_row may be called with multiple sets of rows and turnings.
+insert_pick may be called with multiple sets of rows and turnings.
 
 =item insert_card(after, turns...)
 
-Add a new tablet to the pattern. The variations are analagous to insert_row.
+Add a new tablet to the pattern. The variations are analagous to insert_pick.
 The tablet is presumed to be S threaded starting with hole A.
 
 =item delete_row(rowlist)

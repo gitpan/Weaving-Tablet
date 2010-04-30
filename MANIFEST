@@ -1,11 +1,15 @@
 Changes
-MANIFEST
-Makefile.PL
-README
 lib/Weaving/Tablet.pm
+lib/Weaving/Tablet/Card.pm
 lib/Weaving/Tablet/Tk.pm
+Makefile.PL
+MANIFEST
+META.yml			Module meta-data (added by MakeMaker)
+README
+snartemo.pl
+t/00.card.t
 t/00.load.t
+t/00.pattern.t
 t/perlcritic.t
 t/pod-coverage.t
 t/pod.t
-META.yml                                 Module meta-data (added by MakeMaker)
