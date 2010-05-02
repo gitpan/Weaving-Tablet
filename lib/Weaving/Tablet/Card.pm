@@ -15,6 +15,8 @@ has 'color' => (isa => 'ArrayRef[Int]', is => 'ro', default => sub { [] });
 has 'twist' => (isa => 'ArrayRef[Int]', is => 'ro', default => sub { [] });
 has 'floats' => (isa => 'ArrayRef', is => 'ro', default => sub { [] });
 
+our $VERSION = '0.9.2';
+
 around BUILDARGS => sub {
     my $orig = shift;
     my $class = shift;

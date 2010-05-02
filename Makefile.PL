@@ -18,6 +18,7 @@ WriteMakefile(
         'Tk::ColorEditor' => 0,
         'Data::Dumper' => 0,
         'Moose' => 0,
+	'namespace::autoclean' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Weaving-Tablet-*' },

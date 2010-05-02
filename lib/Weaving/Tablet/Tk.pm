@@ -39,7 +39,7 @@ has 'background_color' => (isa => 'Str', is => 'rw', default => 'white');
 has 'canvas_tags' => (isa => 'HashRef', is => 'ro', default => sub { {} });
 
 our $VERSION;
-use version; $VERSION = qv('0.9.1');
+use version; $VERSION = qv('0.9.2');
 
 # Preloaded methods go here.
 my %_windowlist;

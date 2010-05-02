@@ -7,7 +7,7 @@ use Moose;
 use Weaving::Tablet::Card;
 
 our $VERSION;
-use version; $VERSION = qv('0.9.1');
+use version; $VERSION = qv('0.9.2');
 
 # Other recommended modules (uncomment to use):
 #  use IO::Prompt;
@@ -34,87 +34,6 @@ sub BUILD
 	push @{$self->cards}, Weaving::Tablet::Card->new(number_of_turns => 
 	$self->pattern_length) for 1..$self->number_of_cards;
 }
-=pod
-sub new
-{
-	my $this = shift;
-	my $class = ref($this) || $this || __PACKAGE__;
-	my $self = {};
-	bless $self, $class;
-	$self->initialize(ref($this) ? %$this : ());
-	
-	$self;
-}
-
-sub new_from_file
-{
-	my $this = shift;
-	my $class = $this || __PACKAGE__;
-	my $filename = shift;
-	
-	return undef unless defined $filename;
-	return undef unless -r $filename;
-	
-	my $self = $class->new;
-	$self->file_name($filename);
-	
-	return undef unless $self->load_pattern;
-	
-	$self;
-}
-
-sub new_from_scratch
-{
-	my $this = shift;
-	my $class = $this || __PACKAGE__;
-	my ($cards, $rows) = @_;
-	
-	$cards ||= 1;
-	$rows ||= 1;
-	
-	my $self = $class->new;
-	$self->initialize(number_of_cards => $cards,
-		number_of_rows => $rows);
-
-	foreach my $c (0..$cards-1)
-	{
-		$self->{start}[$c] = $c % $self->number_of_holes; # rotate the starting positions
-		$self->{SZ}[$c] = 'S';
-		$self->{threading}[$c] = [0..$self->number_of_holes-1];
-		push @{$self->{turns}[$c]}, ('/') x $rows;
-	}
-	
-	$self->{color_table} = [qw/red green blue black yellow white/];
-	
-	$self;
-}
-
-sub initialize
-{
-	my $self = shift;
-	my %parms = @_;
-	$self->{number_of_cards} = 0;
-	$self->{number_of_rows} = 0;
-	$self->{number_of_holes} = 4;
-	$self->{turns} = [];
-	$self->{start} = [];
-	$self->{color_table} = [];
-	$self->{threading} = [];
-	$self->{SZ} = [];
-	$self->{file_name} = undef;
-	$self->{color} = [];
-	$self->{twist} = [];
-	$self->{dirty} = 0;
-	
-	foreach my $k (keys %parms)
-	{
-		$self->{$k} = $parms{$k};
-	}
-	
-	$self;
-}
-
-=cut
 
 sub load_pattern
 {
