@@ -127,22 +127,5 @@ sub float_card
     push @{$self->floats}, [ $float_start, $self->number_of_turns ];
 }
 
-
-=pod
-stuff from old initialize for reference
-	$self->{number_of_cards} = 0;
-	$self->{number_of_rows} = 0;
-	$self->{number_of_holes} = 4;
-	$self->{turns} = [];
-	$self->{start} = [];
-	$self->{color_table} = [];
-	$self->{threading} = [];
-	$self->{SZ} = [];
-	$self->{file_name} = undef;
-	$self->{color} = [];
-	$self->{twist} = [];
-	$self->{dirty} = 0;
-=cut
-
 __PACKAGE__->meta->make_immutable;
 1;

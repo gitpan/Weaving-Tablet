@@ -16,3 +16,9 @@ Revision history for Weaving-Tablet
 		Change canvas handling to not use a bazillion tags
 		Tags are now handled by hand by wrapping select canvas methods
 		Things runs much faster now
+
+0.9.2	Fri Apr 30 2010
+		Fix some of the build problems reported by automatic testing 
+
+0.9.3	Tue May 4 2010
+		Fix t/perlcritic.t

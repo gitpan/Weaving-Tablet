@@ -7,13 +7,7 @@ use Moose;
 use Weaving::Tablet::Card;
 
 our $VERSION;
-use version; $VERSION = qv('0.9.2');
-
-# Other recommended modules (uncomment to use):
-#  use IO::Prompt;
-#  use Perl6::Export;
-#  use Perl6::Slurp;
-#  use Perl6::Say;
+use version; $VERSION = qv('0.9.3');
 
 has 'pattern_length' => (isa => 'Int', is => 'ro', default => 10);
 has 'number_of_holes' => (isa => 'Int', is => 'ro', default => 4, writer => '_set_number_of_holes');
@@ -106,11 +100,11 @@ sub save_pattern
 	
 	$self->color_pattern;
 	
-	open PATTERN,">".$file or return 0;
+	open my $pattern, ">", $file or return 0;
 	
-	print PATTERN $self->dump_pattern;
+	print $pattern $self->dump_pattern;
 	
-	close PATTERN;
+	close $pattern;
 	$self->dirty(0);
 	1;
 }
@@ -343,8 +337,8 @@ sub SZ
 	}
 	elsif (defined($card) and not ref($card))
 	{
-		return undef if $card < 0;
-		return undef if $card >= $self->number_of_cards;
+		return if $card < 0;
+		return if $card >= $self->number_of_cards;
 		return $self->cards->[$card]->SZ;
 	}
 	elsif (not defined $card)
@@ -358,7 +352,7 @@ sub SZ
 	}
 	else 
 	{
-		return undef;
+		return;
 	}
 }
 
@@ -394,8 +388,8 @@ sub start
 	}
 	elsif (defined($card) and not ref($card))
 	{
-		return undef if $card < 0;
-		return undef if $card >= $self->number_of_cards;
+		return if $card < 0;
+		return if $card >= $self->number_of_cards;
 		return $self->cards->[$card]->start;
 	}
 	elsif (not defined $card)
@@ -409,7 +403,7 @@ sub start
 	}
 	else 
 	{
-		return undef;
+		return;
 	}
 }
 
@@ -424,40 +418,40 @@ sub threading
 	}
 	elsif (@_ == 1)
 	{
-		return undef if $card < 0;
-		return undef if $card >= $self->number_of_cards;
+		return if $card < 0;
+		return if $card >= $self->number_of_cards;
 		return $self->cards->[$card]->threading;
 	}
 	elsif (@_ == 2) # (card, hole) or (card, listref_of_color_indices)
 	{
 		unless (ref($hole))
 		{
-			return undef if $card < 0;
-			return undef if $card >= $self->number_of_cards;
-			return undef if $hole < 0;
-			return undef if $hole >= $self->number_of_holes;
+			return if $card < 0;
+			return if $card >= $self->number_of_cards;
+			return if $hole < 0;
+			return if $hole >= $self->number_of_holes;
 			return ($self->cards->[$card]->threading->[$hole]);
 		}
 		elsif (ref($hole) eq 'ARRAY')
 		{
-			return undef if $card < 0;
-			return undef if $card >= $self->number_of_cards;
-			return undef if grep /\D/, @$hole;
-			return undef if @$hole != $self->number_of_holes;
+			return if $card < 0;
+			return if $card >= $self->number_of_cards;
+			return if grep /\D/, @$hole;
+			return if @$hole != $self->number_of_holes;
 			$self->card->[$card]->set_threading($hole);
 			$self->dirty(1);
 		}
 		else
 		{
-			return undef;
+			return;
 		}
 	}
 	elsif (@_ >= 3)
 	{
-		return undef if $card < 0;
-		return undef if $card >= $self->number_of_cards;
-		return undef if $hole < 0;
-		return undef if $hole >= $self->number_of_holes;
+		return if $card < 0;
+		return if $card >= $self->number_of_cards;
+		return if $hole < 0;
+		return if $hole >= $self->number_of_holes;
 		$self->dirty(1);
 		$self->cards->[$card]->threading->[$hole] = $value;
 	}
@@ -470,20 +464,20 @@ sub turns
 	
 	if (@_ >= 3)
 	{
-		return undef if $card < 0;
-		return undef if $card >= $self->number_of_cards;
-		return undef if $row < 0;
-		return undef if $row >= $self->number_of_rows;
-		return undef unless $turn =~ /^[\\\/|]$/;
+		return if $card < 0;
+		return if $card >= $self->number_of_cards;
+		return if $row < 0;
+		return if $row >= $self->number_of_rows;
+		return unless $turn =~ /^[\\\/|]$/;
 		$self->dirty(1);
 		$self->card_turns($card)->[$row] = $turn;
 	}
 	elsif (@_ == 2)
 	{
-		return undef if $card < 0;
-		return undef if $card >= $self->number_of_cards;
-		return undef if $row < 0;
-		return undef if $row >= $self->number_of_rows;
+		return if $card < 0;
+		return if $card >= $self->number_of_cards;
+		return if $row < 0;
+		return if $row >= $self->number_of_rows;
 		return $self->card_turns($card)->[$row];
 	}
 	else
@@ -499,8 +493,8 @@ sub row_turns
 	
 	if (@_ >= 2)
 	{
-		return undef if $row < 0;
-		return undef if $row >= $self->number_of_rows;
+		return if $row < 0;
+		return if $row >= $self->number_of_rows;
 		foreach my $c (0..$self->number_of_cards-1)
 		{
 			last if $c >= @$turns;
@@ -510,8 +504,8 @@ sub row_turns
 	}
 	elsif (@_ == 1)
 	{
-		return undef if $row < 0;
-		return undef if $row >= $self->number_of_rows;
+		return if $row < 0;
+		return if $row >= $self->number_of_rows;
 		my @row;
 		foreach my $c (0..$self->number_of_cards-1)
 		{
@@ -521,7 +515,7 @@ sub row_turns
 	}
 	else
 	{
-		return undef;
+		return;
 	}
 }
 
@@ -532,8 +526,8 @@ sub card_turns
 	
 	if (@_ >= 2)
 	{
-		return undef if $card < 0;
-		return undef if $card >= $self->number_of_cards;
+		return if $card < 0;
+		return if $card >= $self->number_of_cards;
 		my @values = @$turns;
 		pop @values while @values > $self->number_of_rows;
 		$self->dirty(1);
@@ -541,13 +535,13 @@ sub card_turns
 	}
 	elsif (@_ == 1)
 	{
-		return undef if $card < 0;
-		return undef if $card >= $self->number_of_cards;
+		return if $card < 0;
+		return if $card >= $self->number_of_cards;
 		return $self->cards->[$card]->turns;
 	}
 	else
 	{
-		return undef;
+		return;
 	}
 }
 
@@ -557,8 +551,8 @@ sub twist
 	my ($card, $row) = shift;
 	
 	return @{$self->{twist}} unless @_;
-	return undef unless ($card >= 0 and $card < $self->number_of_cards);
-	return undef unless ($row >= 0 and $row < $self->number_of_rows);
+	return unless ($card >= 0 and $card < $self->number_of_cards);
+	return unless ($row >= 0 and $row < $self->number_of_rows);
 	return $self->card_twist->[$row];
 }
 
@@ -567,8 +561,8 @@ sub row_twist
 	my $self = shift;
 	my $row = shift;
 	
-	return undef unless defined $row;
-	return undef unless ($row >= 0 and $row < $self->number_of_rows);
+	return unless defined $row;
+	return unless ($row >= 0 and $row < $self->number_of_rows);
 	my @row;
 	foreach my $c (0 .. $self->number_of_cards-1)
 	{
@@ -582,8 +576,8 @@ sub card_twist
 	my $self = shift;
 	my $card = shift;
 	
-	return undef unless defined $card;
-	return undef unless ($card >= 0 and $card < $self->number_of_cards);
+	return unless defined $card;
+	return unless ($card >= 0 and $card < $self->number_of_cards);
 	return @{$self->cards->[$card]->twist};
 }
 
@@ -593,8 +587,8 @@ sub color
 	my ($card, $row) = @_;
 	
 	return @{$self->{color}} unless @_;
-	return undef unless ($card >= 0 and $card < $self->number_of_cards);
-	return undef unless ($row >= 0 and $row < $self->number_of_rows);
+	return unless ($card >= 0 and $card < $self->number_of_cards);
+	return unless ($row >= 0 and $row < $self->number_of_rows);
 	return $self->card_color($card)->[$row];
 }
 
@@ -603,8 +597,8 @@ sub row_color
 	my $self = shift;
 	my $row = shift;
 	
-	return undef unless defined $row;
-	return undef unless ($row >= 0 and $row < $self->number_of_rows);
+	return unless defined $row;
+	return unless ($row >= 0 and $row < $self->number_of_rows);
 	my @row;
 	foreach my $c (0..$self->number_of_cards-1)
 	{
@@ -618,8 +612,8 @@ sub card_color
 	my $self = shift;
 	my $card = shift;
 	
-	return undef unless defined $card;
-	return undef unless ($card >= 0 and $card < $self->number_of_cards);
+	return unless defined $card;
+	return unless ($card >= 0 and $card < $self->number_of_cards);
 	return $self->cards->[$card]->color;
 }
 
