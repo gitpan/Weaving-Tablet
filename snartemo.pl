@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 use warnings;
 use strict;
 use Weaving::Tablet::Tk;
@@ -6,14 +6,16 @@ use Weaving::Tablet::Tk;
 use Getopt::Euclid;
 
 my $pattern;
+my %args;
+$args{is_twill} = exists $ARGV{-t};
 
 if (exists $ARGV{-i})
 {
-    $pattern = Weaving::Tablet::Tk->new_pattern(file => $ARGV{-i});
+    $pattern = Weaving::Tablet::Tk->new_pattern(file => $ARGV{-i}, %args);
 }
 else
 {
-    $pattern = Weaving::Tablet::Tk->new_pattern(cards => $ARGV{-c}, rows => $ARGV{-r});
+    $pattern = Weaving::Tablet::Tk->new_pattern(cards => $ARGV{-c}, rows => $ARGV{-r}, %args);
 }
 Tk::MainLoop();
 
@@ -45,6 +47,10 @@ The number of cards to generate if an input file is not given. Defaults to 20.
     number.default: 10
 
 The number of turns to generate if an input file is not given. Defaults to 10.
+
+=item -t[will]
+
+Create or interpret the pattern as a 3/1 twill/repp pattern.
 
 =back
 

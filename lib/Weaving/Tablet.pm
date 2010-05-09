@@ -7,7 +7,7 @@ use Moose;
 use Weaving::Tablet::Card;
 
 our $VERSION;
-use version; $VERSION = qv('0.9.3');
+use version; $VERSION = qv('0.9.4');
 
 has 'pattern_length' => (isa => 'Int', is => 'ro', default => 10);
 has 'number_of_holes' => (isa => 'Int', is => 'ro', default => 4, writer => '_set_number_of_holes');
@@ -16,6 +16,7 @@ has 'cards' => (isa  => 'ArrayRef[Weaving::Tablet::Card]', is => 'ro', default =
 has 'color_table' => (isa => 'ArrayRef[Str]', is => 'ro', default => sub { [qw/red green blue black yellow white/] });
 has 'file_name' => (isa => 'Str', is => 'rw');
 has 'dirty' => (isa => 'Bool', is => 'rw', default => 0);
+has 'is_twill' => ( isa => 'Bool', is => 'rw', default => 0 );
 
 sub BUILD
 {

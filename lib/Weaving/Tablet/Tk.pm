@@ -12,6 +12,8 @@ require Tk::ColorEditor;
 use Data::Dumper;
 use Moose;
 use namespace::autoclean;
+use File::Spec::Functions;
+use File::Basename;
 
 has 'pattern' =>
   ( isa => 'Weaving::Tablet', is => 'ro', writer => '_set_pattern' );
@@ -31,6 +33,8 @@ sub half_col_size { my $self = shift; return int($self->col_spacing/2); }
 has 'current_row' => (isa => 'Int', is => 'rw', default => 0);
 has 'current_card' => (isa => 'Int', is => 'rw', default => 0);
 has 'smooth' => (isa => 'Bool', is => 'rw', default => 0);
+has 'outline' => (isa => 'Bool', is => 'rw', default => 0);
+has 'outline_color' => (isa => 'Str', is => 'rw', default => 'black');
 has 'overlap' => (isa => 'Bool', is => 'rw', default => 0);
 has 'draw_grid'=> (isa => 'Bool', is => 'rw', default => 0);
 has 'show_floats' => (isa => 'Bool', is => 'rw', default => 0);
@@ -74,6 +78,7 @@ sub new_pattern
     $win->iconname('snartemo');
     $win->title( $args{file} || "Untitled" );
 
+    # Make a new ME here!!
     my $self = __PACKAGE__->new( pattern => $pattern, 
         window => $win,
         canvas => $win->Scrolled(
@@ -152,6 +157,11 @@ sub create_menu
                 ],
                 [ Separator => '' ],
                 [
+                    Button   => 'Generate Postscript...',
+                    -command => sub { $self->print_pattern_as; }
+                ],
+                [ Separator => '' ],
+                [
                     Button   => 'Reload',
                     -command => sub { $self->revert_pattern; }
                 ],
@@ -190,6 +200,22 @@ sub create_menu
                     -command    => sub {
                         $self->update_pattern;
                       }
+                ],
+                [
+                    Checkbutton => 'Outline',
+                    -variable   => \$self->{outline},
+                    -command    => sub {
+                        $self->update_pattern;
+                      }
+                ],
+                [ Separator => '' ],
+                [
+                    Button   => 'Outline Color',
+                    -command => sub { $self->set_outline_color; }
+                ],
+                [
+                    Button   => 'black outline',
+                    -command => sub { $self->outline_color_black; }
                 ],
                 [ Separator => '' ],
                 [
@@ -305,6 +331,27 @@ sub show_twist
     my $self  = shift;
     my $twist = $self->pattern->print_twist;
     print $twist;
+}
+
+sub set_outline_color
+{
+    my $self     = shift;
+    my $bg_color = $self->color_dlog->Show(
+        -title        => 'Outline Color',
+        -initialcolor => $self->outline_color
+    );
+    return unless defined $bg_color;
+    $self->outline_color($bg_color);
+    $self->outline(1);
+    $self->canvas->itemconfigure( 'turn',  -outline => $self->outline_color );
+}
+
+sub outline_color_black
+{
+    my $self = shift;
+    $self->outline_color('black');
+    $self->outline(1);
+    $self->canvas->itemconfigure( 'turn',  -outline => $self->outline_color );
 }
 
 sub bg_color
@@ -508,8 +555,9 @@ sub _draw_pattern
                 -fill => $pattern->color_table->[
                     $pattern->threading(
                         $card, $pattern->color( $card, $row )
-                    
-                )],
+                    )],
+                -outline => $self->outline ? $self->outline_color : undef,
+                -width => 0.5,
                 -tags =>
                   [ 'turn', "row$row", "card$card", "turn$card" . "x$row" ],
             );
@@ -880,6 +928,61 @@ sub save_pattern_as
     return;
 }
 
+sub print_pattern_as
+{
+    my $self = shift;
+    my $fs =
+      $self->fs_dlog( { -filelabel => 'Save postscript as...', -create => 1 } );
+    my $file = $fs->Show;
+    return if ! defined $file;
+    return if $file eq '';
+    my @bbox = $self->canvas->bbox('all');
+    my $width = $bbox[2]-$bbox[0];
+    my $height = $bbox[3]-$bbox[1];
+    my $pagewidth = $width/90 . 'i';
+    my $height_per_page = $height > 900 ? 860 : 900;
+    my $page_overlap = $height > 900 ? 40 : 0;
+    if ($width > 720)
+    {
+        $pagewidth = '8i';
+        $height_per_page *= $width/720;
+        $height_per_page = int($height_per_page);
+    }
+    my $pages = int($height/$height_per_page)+1;
+    # now 
+    my $page = 1;
+    my $y = $bbox[3] - ($height_per_page + $page_overlap);
+    while ($page <= $pages)
+    {
+        my $y = $bbox[3] - ($height_per_page*$page + $page_overlap);
+        $y = $bbox[1] if $y < $bbox[1];
+        use autodie;
+        my $psfile = _add_page_to_file_name($file, $page);
+        print "Printing page $page to $psfile\n";
+        $self->canvas->postscript(
+            -file => $psfile,
+            -colormode => 'color',
+            -x => $bbox[0],
+            -y => $y,
+            -width => $width,
+            -height => $height_per_page + $page_overlap,
+            -pagewidth => $pagewidth,
+            );
+        $page++;
+    }
+    return;
+}
+
+sub _add_page_to_file_name
+{
+    my ($path, $number) = @_;
+    my ($volume, $directories, $file) = File::Spec->splitpath( $path );
+    my($filename, undef, $suffix) = fileparse($file, qr/\.[^.]*/);
+    $filename .= $number;
+    return catfile($volume, $directories, $filename.$suffix) if $volume;
+    return catfile($directories, $filename.$suffix);
+}
+
 sub insert_row_cmd
 {
     my $self = shift;
@@ -971,42 +1074,44 @@ sub refresh_color_list
     my $self = shift;
     my $h    = shift;
     $h->delete('all');
-    foreach my $c ( 0 .. $self->color_table - 1 )
+    foreach my $c ( 0 .. @{$self->pattern->color_table} - 1 )
     {
         $h->add( $c, -text => $c );
-        $h->itemCreate( $c, 1, -text => $self->color_table($c) );
+        $h->itemCreate( $c, 1, -text => $self->pattern->color_table->[$c] );
     }
 }
 
 sub refresh_card_threading
 {
-    my $pattern     = shift;
+    my $self     = shift;
+    my $pattern = $self->pattern;
     my $card_canvas = shift;
     my $threading   = shift
-      || [ $pattern->threading( $pattern->current_card ) ];
+      || $pattern->threading( $self->current_card );
 
     foreach my $h ( 0 .. 3 )
     {
         $card_canvas->itemconfigure( "hole$h",
-            -fill => $pattern->color_table( $$threading[$h] ), );
+            -fill => $pattern->color_table->[$threading->[$h]], );
     }
 }
 
 sub edit_threading
 {
-    my $pattern = shift;
-    my $canvas  = $pattern->canvas;
-    $pattern->set_current_card;
-    $pattern->current_card(0) unless $pattern->current_card;
+    my $self = shift;
+    my $pattern = $self->pattern;
+    my $canvas  = $self->canvas;
+    $self->set_current_card;
+    $self->current_card(0) unless $self->current_card;
 
-    my $list        = $pattern->threading_dlog->{h};
-    my $t           = $pattern->threading_dlog->{dlog};
-    my $card_canvas = $pattern->threading_dlog->{card_canvas};
+    my $list        = $self->threading_dlog->{h};
+    my $t           = $self->threading_dlog->{dlog};
+    my $card_canvas = $self->threading_dlog->{card_canvas};
 
-    $pattern->threading_dlog->{start} =
-      $pattern->start( $pattern->current_card );
-    $pattern->refresh_color_list($list);
-    $pattern->refresh_card_threading($card_canvas);
+    $self->threading_dlog->{start} =
+      $pattern->start( $self->current_card );
+    $self->refresh_color_list($list);
+    $self->refresh_card_threading($card_canvas);
     $t->deiconify;
     $t->raise;
 }
@@ -1017,8 +1122,12 @@ sub gettags
     my $tag = shift;
     if ($tag eq 'current')
     {
-        my $idtag = (grep {/^id\d+/} $self->canvas->gettags($tag))[0];
-        return @{$self->canvas_tags->{$idtag}};
+        for my $tag ($self->canvas->gettags('current'))
+        {
+            next unless $tag =~ /^id\d+/;
+            return @{$self->canvas_tags->{$tag}};
+        }
+        return;
     }
 }
 sub flip_turn
@@ -1190,15 +1299,14 @@ sub _palette    # (frame, card_canvas, \current_hole, \threading, update)
     );
     $h->configure(
         -browsecmd => sub {
-            $self->threading( $self->current_card, $$current_hole, shift );
+            $self->pattern->threading( $self->current_card, $$current_hole, shift );
             $card_canvas->itemconfigure(
                 "hole$$current_hole",
-                -fill => $self->color_table(
-                    $self->threading( $self->current_card, $$current_hole )
-                )
+                -fill => $self->pattern->color_table->[
+                    $self->pattern->threading( $self->current_card, $$current_hole)],
             );
             $card_canvas->update;
-            $self->color_pattern( $self->current_card );
+            $self->pattern->color_pattern( $self->current_card );
             $self->update_pattern( $self->current_card );
         },
     ) if $update eq 'old';
@@ -1269,7 +1377,7 @@ sub threading_dlog
             -command => [ withdraw => $t ],
         )->pack(qw/-side bottom/);
         my $f1 = $t->Frame->pack(qw/-side left/);
-        $f1->Label( -textvariable => \$self->{_current_card} )
+        $f1->Label( -textvariable => \$self->{current_card} )
           ->pack(qw/-side top/);
         my $f2 =
           $t->Frame( -label => "Palette", )
@@ -1285,7 +1393,7 @@ sub threading_dlog
             -text    => 'Prev',
             -command => sub {
                 $self->set_current_card( $self->current_card - 1 );
-                $t_info->{start} = $self->start( $self->current_card );
+                $t_info->{start} = $self->pattern->start( $self->current_card );
                 $self->refresh_card_threading($card_canvas);
             },
         )->pack(qw/-side left/);
@@ -1293,7 +1401,7 @@ sub threading_dlog
             -text    => 'Next',
             -command => sub {
                 $self->set_current_card( $self->current_card + 1 );
-                $t_info->{start} = $self->start( $self->current_card );
+                $t_info->{start} = $self->pattern->start( $self->current_card );
                 $self->refresh_card_threading($card_canvas);
             },
         )->pack(qw/-side right/);

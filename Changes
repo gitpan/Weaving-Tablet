@@ -22,3 +22,13 @@ Revision history for Weaving-Tablet
 
 0.9.3	Tue May 4 2010
 		Fix t/perlcritic.t
+		
+0.9.4	Wed May 5 2010
+		Move version into Makefile.PL
+		Create Weaving::Tablet::Twill as subclass of Weaving::Tablet
+		Create Weaving::Tablet::Twill::Card as subclass of Weaving::Tablet::Card
+		Add -t[will] option to snartemo.pl
+		Add outline color
+		Add print to PostScript with pagination and suitable scaling to fit as appropriate
+		Correct bugs in edit threading dialog
+		

@@ -5,7 +5,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME                => 'Weaving::Tablet',
     AUTHOR              => 'Michael Houghton <herveus@cpan.org>',
-    VERSION_FROM        => 'lib/Weaving/Tablet.pm',
+    VERSION             => '0.009.004',
     ABSTRACT_FROM       => 'lib/Weaving/Tablet.pm',
     PL_FILES            => {},
     PREREQ_PM => {
@@ -18,7 +18,7 @@ WriteMakefile(
         'Tk::ColorEditor' => 0,
         'Data::Dumper' => 0,
         'Moose' => 0,
-	'namespace::autoclean' => 0,
+        'namespace::autoclean' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Weaving-Tablet-*' },

@@ -2,6 +2,8 @@ Changes
 lib/Weaving/Tablet.pm
 lib/Weaving/Tablet/Card.pm
 lib/Weaving/Tablet/Tk.pm
+lib/Weaving/Tablet/Twill.pm
+lib/Weaving/Tablet/Twill/Card.pm
 Makefile.PL
 MANIFEST
 META.yml			Module meta-data (added by MakeMaker)
