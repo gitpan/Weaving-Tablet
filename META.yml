@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Weaving-Tablet
-version:            0.009.004
+version:            0.009.005
 abstract:           Perl extension for manipulating tablet weaving patterns
 author:
     - Michael Houghton <herveus@cpan.org>

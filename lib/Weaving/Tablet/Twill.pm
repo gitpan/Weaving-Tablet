@@ -1,6 +1,7 @@
 package Weaving::Tablet::Twill;
 
 use Moose;
+use namespace::autoclean
 use Carp;
 
 extends 'Weaving::Tablet';
@@ -96,6 +97,7 @@ sub initialize_cells
     }
 }
 
+__PACKAGE__->meta->make_immutable
 1;
 __END__
 

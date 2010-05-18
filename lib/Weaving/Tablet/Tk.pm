@@ -79,7 +79,7 @@ sub new_pattern
     $win->title( $args{file} || "Untitled" );
 
     # Make a new ME here!!
-    my $self = __PACKAGE__->new( pattern => $pattern, 
+    my $self = $this->new( pattern => $pattern, 
         window => $win,
         canvas => $win->Scrolled(
             'Canvas',
@@ -890,7 +890,20 @@ sub revert_pattern
         -buttons        => [qw/OK Cancel/],
         -default_button => 'OK'
       ) eq 'Cancel';
-    $self->pattern->load_pattern and $self->update_pattern;
+    
+    my $new_pattern = $self->pattern->new(file_name => $self->pattern->file_name);
+    my $old_canvas = $self->canvas;
+    my $new_canvas =  $self->window->Scrolled(
+            'Canvas',
+            -background => 'white',
+            -height     => $old_canvas->height,
+            -width      => $old_canvas->width,
+            )->pack(qw/-expand yes -fill both/),
+    $old_canvas->packForget;
+    $old_canvas->destroy;
+    $self->_set_canvas($new_canvas);
+    $new_pattern->load_pattern;
+    $self->draw_pattern;
 }
 
 sub make_new_from_file
@@ -940,8 +953,8 @@ sub print_pattern_as
     my $width = $bbox[2]-$bbox[0];
     my $height = $bbox[3]-$bbox[1];
     my $pagewidth = $width/90 . 'i';
-    my $height_per_page = $height > 900 ? 860 : 900;
-    my $page_overlap = $height > 900 ? 40 : 0;
+    my $height_per_page = $height > 850 ? 800 : 850;
+    my $page_overlap = $height > 850 ? 50 : 0;
     if ($width > 720)
     {
         $pagewidth = '8i';

@@ -91,6 +91,13 @@ sub load_pattern
 	1;
 }
 
+sub reload_pattern
+{
+    my $self = shift;
+    $self->delete_card(0 .. $self->number_of_cards-1);
+    $self->load_pattern;
+}
+
 sub save_pattern
 {
 	my $self = shift;
@@ -253,10 +260,7 @@ sub delete_card
 	{
 		$self->{number_of_cards}--;
 		
-		splice @{$self->{turns}}, $card, 1;
-		splice @{$self->{SZ}}, $card, 1;
-		splice @{$self->{start}}, $card, 1;
-		splice @{$self->{threading}}, $card, 1;
+		splice @{$self->cards}, $card, 1;
 	}
 	$self->dirty(1);
 }

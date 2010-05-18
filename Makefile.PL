@@ -5,7 +5,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME                => 'Weaving::Tablet',
     AUTHOR              => 'Michael Houghton <herveus@cpan.org>',
-    VERSION             => '0.009.004',
+    VERSION             => '0.009.005',
     ABSTRACT_FROM       => 'lib/Weaving/Tablet.pm',
     PL_FILES            => {},
     PREREQ_PM => {

@@ -28,7 +28,12 @@ Revision history for Weaving-Tablet
 		Create Weaving::Tablet::Twill as subclass of Weaving::Tablet
 		Create Weaving::Tablet::Twill::Card as subclass of Weaving::Tablet::Card
 		Add -t[will] option to snartemo.pl
-		Add outline color
+		Add outline color controls
 		Add print to PostScript with pagination and suitable scaling to fit as appropriate
 		Correct bugs in edit threading dialog
+		
+0.9.5	Fri May 14 2010
+		Tweak pagination for printing.
+		Corrected pattern reload
+		
 		
